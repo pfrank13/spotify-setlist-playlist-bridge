@@ -19,8 +19,8 @@ Java is managed with [`asdf`](https://asdf-vm.com/) — see [`.tool-versions`](.
 asdf install
 ```
 
-Gradle resolves the JDK via its Java toolchain support, so make sure a Temurin 25
-JDK is available on your machine (asdf-installed JDKs are auto-detected).
+Gradle resolves the JDK via its Java toolchain support, so make sure an OpenJDK 25
+build is available on your machine (asdf-installed JDKs are auto-detected).
 
 ## Build & test
 
