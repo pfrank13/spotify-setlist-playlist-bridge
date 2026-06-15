@@ -11,4 +11,9 @@ interface SetlistFmClient {
 	 * @throws SetlistFmException if the request fails or the response cannot be read
 	 */
 	fun getSetListById(id: String): Setlist
+
+	companion object {
+		/** Header setlist.fm requires the API key to be sent in. */
+		const val API_KEY_HEADER = "x-api-key"
+	}
 }

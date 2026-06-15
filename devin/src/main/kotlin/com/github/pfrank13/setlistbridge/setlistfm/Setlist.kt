@@ -44,13 +44,13 @@ data class City(
 )
 
 data class Coords(
-	val lat: Double? = null,
-	val long: Double? = null,
+	val lat: Double?,
+	val long: Double?,
 )
 
 data class Country(
-	val code: String? = null,
-	val name: String? = null,
+	val code: String?,
+	val name: String?,
 )
 
 data class Tour(
@@ -58,15 +58,15 @@ data class Tour(
 )
 
 data class Set(
-	val name: String? = null,
-	val encore: Int? = null,
+	val name: String?,
+	val encore: Int?,
 	val song: List<Song>,
 )
 
 data class Song(
 	val name: String,
-	val info: String? = null,
-	val tape: Boolean = false,
-	val with: Artist? = null,
-	val cover: Artist? = null,
+	val info: String?,
+	val tape: Boolean,
+	val with: Artist?,
+	val cover: Artist?,
 )

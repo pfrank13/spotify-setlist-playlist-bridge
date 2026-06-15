@@ -12,6 +12,8 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 
 class RestClientSetlistFmClientTest {
 
@@ -27,8 +29,8 @@ class RestClientSetlistFmClientTest {
 	fun `getSetListById returns the deserialized setlist`() {
 		wireMock.stubFor(
 			get(urlEqualTo("/1.0/setlist/$SETLIST_ID"))
-				.withHeader(SetlistFmConfig.API_KEY_HEADER, equalTo(API_KEY))
-				.withHeader("Accept", containing("application/json"))
+				.withHeader(SetlistFmClient.API_KEY_HEADER, equalTo(API_KEY))
+				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
 				.willReturn(
 					aResponse()
 						.withStatus(200)
@@ -92,9 +94,14 @@ class RestClientSetlistFmClientTest {
 			tour = Tour(name = "North American Tour 1964"),
 			set = listOf(
 				Set(
+					name = null,
+					encore = null,
 					song = listOf(
 						Song(
 							name = "Twist and Shout",
+							info = null,
+							tape = false,
+							with = null,
 							cover = Artist(
 								mbid = "f1eb7e69-2c1e-4b39-8de3-7c1a4f6f1234",
 								name = "The Top Notes",
@@ -103,13 +110,14 @@ class RestClientSetlistFmClientTest {
 								url = "https://www.setlist.fm/setlists/the-top-notes-13d6e7f1.html",
 							),
 						),
-						Song(name = "You Can't Do That"),
+						Song(name = "You Can't Do That", info = null, tape = false, with = null, cover = null),
 					),
 				),
 				Set(
+					name = null,
 					encore = 1,
 					song = listOf(
-						Song(name = "Long Tall Sally", info = "Last song of the night"),
+						Song(name = "Long Tall Sally", info = "Last song of the night", tape = false, with = null, cover = null),
 					),
 				),
 			),
