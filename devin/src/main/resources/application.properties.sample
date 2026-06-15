@@ -1,0 +1,10 @@
+# Sample configuration for setlist-bridge.
+# Copy to application.properties (or supply via environment / a profile) and fill in real values.
+
+spring.application.name=setlist-bridge
+
+# --- setlist.fm API client ---
+# Base URL of the setlist.fm REST API.
+setlistfm.base-url=https://api.setlist.fm/rest
+# API key from https://api.setlist.fm/docs/1.0/index.html (sent as the x-api-key header).
+setlistfm.api-key=your-setlist-fm-api-key
