@@ -15,7 +15,11 @@ class SetlistFmConfig {
 	fun setlistFmRestClient(properties: SetlistFmProperties): RestClient =
 		RestClient.builder()
 			.baseUrl(properties.baseUrl)
-			.defaultHeader("x-api-key", properties.apiKey)
+			.defaultHeader(API_KEY_HEADER, properties.apiKey)
 			.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
 			.build()
+
+	companion object {
+		const val API_KEY_HEADER = "x-api-key"
+	}
 }

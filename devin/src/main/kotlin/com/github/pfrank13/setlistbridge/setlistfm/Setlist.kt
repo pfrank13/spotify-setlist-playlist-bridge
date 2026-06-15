@@ -3,43 +3,44 @@ package com.github.pfrank13.setlistbridge.setlistfm
 /**
  * Response model for the setlist.fm `setlist` data type.
  *
+ * Modelled after the documented example, treating fields shown there as required.
  * See https://api.setlist.fm/docs/1.0/json_Setlist.html
  */
 data class Setlist(
-	val id: String? = null,
-	val versionId: String? = null,
-	val eventDate: String? = null,
-	val lastUpdated: String? = null,
-	val artist: Artist? = null,
-	val venue: Venue? = null,
-	val tour: Tour? = null,
-	val set: List<Set> = emptyList(),
-	val info: String? = null,
-	val url: String? = null,
+	val id: String,
+	val versionId: String,
+	val eventDate: String,
+	val lastUpdated: String,
+	val artist: Artist,
+	val venue: Venue,
+	val tour: Tour,
+	val set: List<Set>,
+	val info: String,
+	val url: String,
 )
 
 data class Artist(
-	val mbid: String? = null,
-	val name: String? = null,
-	val sortName: String? = null,
-	val disambiguation: String? = null,
-	val url: String? = null,
+	val mbid: String,
+	val name: String,
+	val sortName: String,
+	val disambiguation: String,
+	val url: String,
 )
 
 data class Venue(
-	val id: String? = null,
-	val name: String? = null,
-	val url: String? = null,
-	val city: City? = null,
+	val id: String,
+	val name: String,
+	val url: String,
+	val city: City,
 )
 
 data class City(
-	val id: String? = null,
-	val name: String? = null,
-	val state: String? = null,
-	val stateCode: String? = null,
-	val coords: Coords? = null,
-	val country: Country? = null,
+	val id: String,
+	val name: String,
+	val state: String,
+	val stateCode: String,
+	val coords: Coords,
+	val country: Country,
 )
 
 data class Coords(
@@ -53,19 +54,19 @@ data class Country(
 )
 
 data class Tour(
-	val name: String? = null,
+	val name: String,
 )
 
 data class Set(
 	val name: String? = null,
 	val encore: Int? = null,
-	val song: List<Song> = emptyList(),
+	val song: List<Song>,
 )
 
 data class Song(
-	val name: String? = null,
+	val name: String,
 	val info: String? = null,
-	val tape: Boolean? = null,
+	val tape: Boolean = false,
 	val with: Artist? = null,
 	val cover: Artist? = null,
 )

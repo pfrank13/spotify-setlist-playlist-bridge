@@ -7,52 +7,39 @@ import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
-@SpringBootTest
-@ActiveProfiles("test")
 class RestClientSetlistFmClientTest {
 
-	@Autowired
 	private lateinit var client: SetlistFmClient
+
+	@BeforeEach
+	fun setUp() {
+		val properties = SetlistFmProperties(baseUrl = wireMock.baseUrl(), apiKey = API_KEY)
+		client = RestClientSetlistFmClient(SetlistFmConfig().setlistFmRestClient(properties))
+	}
 
 	@Test
 	fun `getSetListById returns the deserialized setlist`() {
-		val body = readResource("/setlist.json")
 		wireMock.stubFor(
-			get(urlEqualTo("/1.0/setlist/63de4613"))
-				.withHeader("x-api-key", equalTo("test-api-key"))
+			get(urlEqualTo("/1.0/setlist/$SETLIST_ID"))
+				.withHeader(SetlistFmConfig.API_KEY_HEADER, equalTo(API_KEY))
 				.withHeader("Accept", containing("application/json"))
 				.willReturn(
 					aResponse()
 						.withStatus(200)
 						.withHeader("Content-Type", "application/json")
-						.withBody(body),
+						.withBody(readResource("/setlist.json")),
 				),
 		)
 
-		val setlist = client.getSetListById("63de4613")
+		val setlist = client.getSetListById(SETLIST_ID)
 
-		assertEquals("63de4613", setlist.id)
-		assertEquals("7be1aaa0", setlist.versionId)
-		assertEquals("23-08-1964", setlist.eventDate)
-		assertEquals("The Beatles", setlist.artist?.name)
-		assertEquals("Hollywood Bowl", setlist.venue?.name)
-		assertEquals("Hollywood", setlist.venue?.city?.name)
-		assertEquals("US", setlist.venue?.city?.country?.code)
-		assertEquals("North American Tour 1964", setlist.tour?.name)
-		assertEquals(2, setlist.set.size)
-		assertEquals("Twist and Shout", setlist.set[0].song[0].name)
-		assertEquals("The Top Notes", setlist.set[0].song[0].cover?.name)
-		assertEquals(1, setlist.set[1].encore)
+		assertThat(setlist).isEqualTo(EXPECTED_SETLIST)
 	}
 
 	@Test
@@ -62,21 +49,72 @@ class RestClientSetlistFmClientTest {
 				.willReturn(aResponse().withStatus(404)),
 		)
 
-		assertFailsWith<SetlistFmException> { client.getSetListById("does-not-exist") }
+		assertThatThrownBy { client.getSetListById("does-not-exist") }
+			.isInstanceOf(SetlistFmException::class.java)
 	}
 
 	private fun readResource(path: String): String =
 		requireNotNull(javaClass.getResource(path)) { "Missing test resource $path" }.readText()
 
 	companion object {
+		private const val API_KEY = "test-api-key"
+		private const val SETLIST_ID = "63de4613"
+
 		@JvmStatic
 		@RegisterExtension
 		val wireMock: WireMockExtension = WireMockExtension.newInstance().build()
 
-		@JvmStatic
-		@DynamicPropertySource
-		fun registerProperties(registry: DynamicPropertyRegistry) {
-			registry.add("setlistfm.base-url") { wireMock.baseUrl() }
-		}
+		private val EXPECTED_SETLIST = Setlist(
+			id = SETLIST_ID,
+			versionId = "7be1aaa0",
+			eventDate = "23-08-1964",
+			lastUpdated = "2013-10-20T05:18:08.000+0000",
+			artist = Artist(
+				mbid = "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+				name = "The Beatles",
+				sortName = "Beatles, The",
+				disambiguation = "John, Paul, George and Ringo",
+				url = "https://www.setlist.fm/setlists/the-beatles-23d6a88b.html",
+			),
+			venue = Venue(
+				id = "6bd6ca6e",
+				name = "Hollywood Bowl",
+				url = "https://www.setlist.fm/venue/hollywood-bowl-hollywood-ca-usa-6bd6ca6e.html",
+				city = City(
+					id = "5357527",
+					name = "Hollywood",
+					state = "California",
+					stateCode = "CA",
+					coords = Coords(lat = 34.0983425, long = -118.3267434),
+					country = Country(code = "US", name = "United States"),
+				),
+			),
+			tour = Tour(name = "North American Tour 1964"),
+			set = listOf(
+				Set(
+					song = listOf(
+						Song(
+							name = "Twist and Shout",
+							cover = Artist(
+								mbid = "f1eb7e69-2c1e-4b39-8de3-7c1a4f6f1234",
+								name = "The Top Notes",
+								sortName = "Top Notes, The",
+								disambiguation = "",
+								url = "https://www.setlist.fm/setlists/the-top-notes-13d6e7f1.html",
+							),
+						),
+						Song(name = "You Can't Do That"),
+					),
+				),
+				Set(
+					encore = 1,
+					song = listOf(
+						Song(name = "Long Tall Sally", info = "Last song of the night"),
+					),
+				),
+			),
+			info = "Recorded and published as 'The Beatles at the Hollywood Bowl'",
+			url = "https://www.setlist.fm/setlist/the-beatles/1964/hollywood-bowl-hollywood-ca-63de4613.html",
+		)
 	}
 }
