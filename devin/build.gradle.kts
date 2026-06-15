@@ -5,7 +5,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "com.pfrank13"
+group = "com.github.pfrank13"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -24,6 +24,8 @@ dependencies {
 	implementation("tools.jackson.module:jackson-module-kotlin")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("org.assertj:assertj-core")
+	testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

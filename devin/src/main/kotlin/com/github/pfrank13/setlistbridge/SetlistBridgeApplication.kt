@@ -1,4 +1,4 @@
-package com.pfrank13.setlistbridge
+package com.github.pfrank13.setlistbridge
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

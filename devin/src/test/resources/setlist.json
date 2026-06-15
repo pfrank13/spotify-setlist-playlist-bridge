@@ -1,0 +1,68 @@
+{
+  "artist": {
+    "mbid": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+    "name": "The Beatles",
+    "sortName": "Beatles, The",
+    "disambiguation": "John, Paul, George and Ringo",
+    "url": "https://www.setlist.fm/setlists/the-beatles-23d6a88b.html"
+  },
+  "venue": {
+    "city": {
+      "id": "5357527",
+      "name": "Hollywood",
+      "stateCode": "CA",
+      "state": "California",
+      "coords": {
+        "lat": 34.0983425,
+        "long": -118.3267434
+      },
+      "country": {
+        "code": "US",
+        "name": "United States"
+      }
+    },
+    "url": "https://www.setlist.fm/venue/hollywood-bowl-hollywood-ca-usa-6bd6ca6e.html",
+    "id": "6bd6ca6e",
+    "name": "Hollywood Bowl"
+  },
+  "tour": {
+    "name": "North American Tour 1964"
+  },
+  "set": [
+    {
+      "song": [
+        {
+          "name": "Twist and Shout",
+          "cover": {
+            "mbid": "f1eb7e69-2c1e-4b39-8de3-7c1a4f6f1234",
+            "name": "The Top Notes",
+            "sortName": "Top Notes, The",
+            "disambiguation": "",
+            "url": "https://www.setlist.fm/setlists/the-top-notes-13d6e7f1.html"
+          },
+          "tape": false
+        },
+        {
+          "name": "You Can't Do That",
+          "tape": false
+        }
+      ]
+    },
+    {
+      "encore": 1,
+      "song": [
+        {
+          "name": "Long Tall Sally",
+          "info": "Last song of the night",
+          "tape": false
+        }
+      ]
+    }
+  ],
+  "info": "Recorded and published as 'The Beatles at the Hollywood Bowl'",
+  "url": "https://www.setlist.fm/setlist/the-beatles/1964/hollywood-bowl-hollywood-ca-63de4613.html",
+  "id": "63de4613",
+  "versionId": "7be1aaa0",
+  "eventDate": "23-08-1964",
+  "lastUpdated": "2013-10-20T05:18:08.000+0000"
+}
