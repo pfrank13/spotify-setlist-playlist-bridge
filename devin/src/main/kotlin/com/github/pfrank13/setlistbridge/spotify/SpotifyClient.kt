@@ -15,4 +15,8 @@ interface SpotifyClient {
 	 * @throws SpotifyException if the request fails or the response cannot be read
 	 */
 	fun createPlaylist(name: String, description: String? = null, isPublic: Boolean = true): Playlist
+
+	companion object {
+		const val CREATE_PLAYLIST_URI = "/v1/me/playlists"
+	}
 }

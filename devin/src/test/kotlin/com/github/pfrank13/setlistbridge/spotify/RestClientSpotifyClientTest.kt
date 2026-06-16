@@ -28,6 +28,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.web.client.RestClient
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import java.net.URI
 import java.time.Instant
 
 class RestClientSpotifyClientTest {
@@ -64,7 +66,7 @@ class RestClientSpotifyClientTest {
 		val interceptor = OAuth2ClientHttpRequestInterceptor(manager)
 		interceptor.setClientRegistrationIdResolver { "spotify" }
 
-		SecurityContextHolder.getContext().authentication = TestingAuthenticationToken(PRINCIPAL, "")
+		SecurityContextHolder.getContext().authentication = auth
 
 		val restClient = RestClient.builder()
 			.baseUrl(wireMock.baseUrl())
@@ -82,8 +84,10 @@ class RestClientSpotifyClientTest {
 
 	@Test
 	fun `createPlaylist sends Bearer token and returns the deserialized playlist`() {
+		val responseJson = OBJECT_MAPPER.writeValueAsString(EXPECTED_PLAYLIST)
+
 		wireMock.stubFor(
-			post(urlEqualTo("/v1/me/playlists"))
+			post(urlEqualTo(SpotifyClient.CREATE_PLAYLIST_URI))
 				.withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer $ACCESS_TOKEN"))
 				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
 				.withRequestBody(
@@ -95,7 +99,7 @@ class RestClientSpotifyClientTest {
 					aResponse()
 						.withStatus(201)
 						.withHeader("Content-Type", "application/json")
-						.withBody(PLAYLIST_RESPONSE_JSON),
+						.withBody(responseJson),
 				),
 		)
 
@@ -111,7 +115,7 @@ class RestClientSpotifyClientTest {
 	@Test
 	fun `createPlaylist wraps API errors in SpotifyException`() {
 		wireMock.stubFor(
-			post(urlPathMatching("/v1/me/playlists"))
+			post(urlPathMatching(SpotifyClient.CREATE_PLAYLIST_URI))
 				.willReturn(aResponse().withStatus(403)),
 		)
 
@@ -124,29 +128,18 @@ class RestClientSpotifyClientTest {
 		private const val ACCESS_TOKEN = "test-access-token"
 		private const val PRINCIPAL = "test-principal"
 
+		private val OBJECT_MAPPER = jacksonObjectMapper()
+
 		@JvmStatic
 		@RegisterExtension
 		val wireMock: WireMockExtension = WireMockExtension.newInstance().build()
-
-		private const val PLAYLIST_RESPONSE_JSON = """{
-			"id": "3cEYpjA9oz9GiPac4AsH4n",
-			"name": "My Setlist",
-			"description": "Concert prep",
-			"public": true,
-			"external_urls": {
-				"spotify": "https://open.spotify.com/playlist/3cEYpjA9oz9GiPac4AsH4n"
-			},
-			"href": "https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n",
-			"uri": "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n",
-			"snapshot_id": "MSw0MjI5NzMzNTQ2LDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw"
-		}"""
 
 		private val EXPECTED_PLAYLIST = Playlist(
 			id = "3cEYpjA9oz9GiPac4AsH4n",
 			name = "My Setlist",
 			description = "Concert prep",
 			isPublic = true,
-			externalUrls = mapOf("spotify" to "https://open.spotify.com/playlist/3cEYpjA9oz9GiPac4AsH4n"),
+			externalUrls = mapOf("spotify" to URI("https://open.spotify.com/playlist/3cEYpjA9oz9GiPac4AsH4n")),
 			href = "https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n",
 			uri = "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n",
 			snapshotId = "MSw0MjI5NzMzNTQ2LDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw",

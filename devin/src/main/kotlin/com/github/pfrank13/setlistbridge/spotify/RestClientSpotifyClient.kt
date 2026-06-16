@@ -18,7 +18,7 @@ class RestClientSpotifyClient(
 
 		try {
 			return spotifyRestClient.post()
-				.uri("/v1/me/playlists")
+				.uri(SpotifyClient.CREATE_PLAYLIST_URI)
 				.body(body)
 				.retrieve()
 				.body(Playlist::class.java)
