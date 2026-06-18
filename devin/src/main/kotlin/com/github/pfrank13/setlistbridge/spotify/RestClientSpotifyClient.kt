@@ -10,16 +10,12 @@ class RestClientSpotifyClient(
 ) : SpotifyClient {
 
 	override fun createPlaylist(name: String, description: String?, isPublic: Boolean): Playlist {
-		val body = buildMap<String, Any?> {
-			put("name", name)
-			if (description != null) put("description", description)
-			put("public", isPublic)
-		}
+		val request = CreatePlaylistRequest(name = name, description = description, isPublic = isPublic)
 
 		try {
 			return spotifyRestClient.post()
 				.uri(SpotifyClient.CREATE_PLAYLIST_URI)
-				.body(body)
+				.body(request)
 				.retrieve()
 				.body(Playlist::class.java)
 				?: throw SpotifyException("Empty response body when creating playlist '$name'")
@@ -29,15 +25,12 @@ class RestClientSpotifyClient(
 	}
 
 	override fun addItemsToPlaylist(playlistId: String, uris: List<String>, position: Int?): SnapshotResponse {
-		val body = buildMap<String, Any> {
-			put("uris", uris)
-			if (position != null) put("position", position)
-		}
+		val request = AddItemsToPlaylistRequest(uris = uris, position = position)
 
 		try {
 			return spotifyRestClient.post()
 				.uri(SpotifyClient.ADD_ITEMS_TO_PLAYLIST_URI, playlistId)
-				.body(body)
+				.body(request)
 				.retrieve()
 				.body(SnapshotResponse::class.java)
 				?: throw SpotifyException("Empty response body when adding items to playlist '$playlistId'")
