@@ -104,9 +104,7 @@ class RestClientSpotifyClientTest {
 		)
 
 		val playlist = client.createPlaylist(
-			name = "My Setlist",
-			description = "Concert prep",
-			isPublic = true,
+			CreatePlaylistRequest(name = "My Setlist", description = "Concert prep", isPublic = true),
 		)
 
 		assertThat(playlist).isEqualTo(EXPECTED_PLAYLIST)
@@ -119,7 +117,7 @@ class RestClientSpotifyClientTest {
 				.willReturn(aResponse().withStatus(403)),
 		)
 
-		assertThatThrownBy { client.createPlaylist(name = "Forbidden") }
+		assertThatThrownBy { client.createPlaylist(CreatePlaylistRequest(name = "Forbidden")) }
 			.isInstanceOf(SpotifyException::class.java)
 	}
 
@@ -146,8 +144,10 @@ class RestClientSpotifyClientTest {
 
 		val snapshot = client.addItemsToPlaylist(
 			playlistId = PLAYLIST_ID,
-			uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh", "spotify:track:1301WleyT98MSxVHPZCA6M"),
-			position = 0,
+			request = AddItemsToPlaylistRequest(
+				uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh", "spotify:track:1301WleyT98MSxVHPZCA6M"),
+				position = 0,
+			),
 		)
 
 		assertThat(snapshot).isEqualTo(EXPECTED_SNAPSHOT_RESPONSE)
@@ -163,7 +163,7 @@ class RestClientSpotifyClientTest {
 		assertThatThrownBy {
 			client.addItemsToPlaylist(
 				playlistId = PLAYLIST_ID,
-				uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh"),
+				request = AddItemsToPlaylistRequest(uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh")),
 			)
 		}
 			.isInstanceOf(SpotifyException::class.java)
