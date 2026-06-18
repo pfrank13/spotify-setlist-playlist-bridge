@@ -123,16 +123,67 @@ class RestClientSpotifyClientTest {
 			.isInstanceOf(SpotifyException::class.java)
 	}
 
+	@Test
+	fun `addItemsToPlaylist sends Bearer token and returns the deserialized snapshot response`() {
+		val responseJson = OBJECT_MAPPER.writeValueAsString(EXPECTED_SNAPSHOT_RESPONSE)
+
+		wireMock.stubFor(
+			post(urlEqualTo("/v1/playlists/$PLAYLIST_ID/items"))
+				.withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer $ACCESS_TOKEN"))
+				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
+				.withRequestBody(
+					equalToJson(
+						"""{"uris":["spotify:track:4iV5W9uYEdYUVa79Axb7Rh","spotify:track:1301WleyT98MSxVHPZCA6M"],"position":0}""",
+					),
+				)
+				.willReturn(
+					aResponse()
+						.withStatus(201)
+						.withHeader("Content-Type", "application/json")
+						.withBody(responseJson),
+				),
+		)
+
+		val snapshot = client.addItemsToPlaylist(
+			playlistId = PLAYLIST_ID,
+			uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh", "spotify:track:1301WleyT98MSxVHPZCA6M"),
+			position = 0,
+		)
+
+		assertThat(snapshot).isEqualTo(EXPECTED_SNAPSHOT_RESPONSE)
+	}
+
+	@Test
+	fun `addItemsToPlaylist wraps API errors in SpotifyException`() {
+		wireMock.stubFor(
+			post(urlPathMatching("/v1/playlists/.+/items"))
+				.willReturn(aResponse().withStatus(403)),
+		)
+
+		assertThatThrownBy {
+			client.addItemsToPlaylist(
+				playlistId = PLAYLIST_ID,
+				uris = listOf("spotify:track:4iV5W9uYEdYUVa79Axb7Rh"),
+			)
+		}
+			.isInstanceOf(SpotifyException::class.java)
+	}
+
 	companion object {
 		private const val CLIENT_ID = "test-client-id"
 		private const val ACCESS_TOKEN = "test-access-token"
 		private const val PRINCIPAL = "test-principal"
+		private const val PLAYLIST_ID = "3cEYpjA9oz9GiPac4AsH4n"
 
 		private val OBJECT_MAPPER = jacksonObjectMapper()
 
 		@JvmStatic
 		@RegisterExtension
 		val wireMock: WireMockExtension = WireMockExtension.newInstance().build()
+
+		private val EXPECTED_SNAPSHOT_RESPONSE = SnapshotResponse(
+			snapshotId = "JbtmHBDBAYu3/bt8BOXKjzKx3i0b6LCa/wVjyl6qQ2Yf6nFXkbmzuFMs",
+		)
 
 		private val EXPECTED_PLAYLIST = Playlist(
 			id = "3cEYpjA9oz9GiPac4AsH4n",
