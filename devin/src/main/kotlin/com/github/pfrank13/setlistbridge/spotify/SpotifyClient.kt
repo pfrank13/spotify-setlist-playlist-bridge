@@ -39,10 +39,10 @@ interface SpotifyClient {
 	fun searchForItems(
 		q: String,
 		type: Set<SearchItemType>,
-		market: String? = null,
-		limit: Int? = null,
-		offset: Int? = null,
-		includeExternal: String? = null,
+		market: String?,
+		limit: Int?,
+		offset: Int?,
+		includeExternal: String?,
 	): SearchResponse
 
 	companion object {

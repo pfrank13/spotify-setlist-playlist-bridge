@@ -10,4 +10,7 @@ enum class SearchItemType(@JsonValue val value: String) {
 	SHOW("show"),
 	EPISODE("episode"),
 	AUDIOBOOK("audiobook"),
+	;
+
+	override fun toString(): String = value
 }

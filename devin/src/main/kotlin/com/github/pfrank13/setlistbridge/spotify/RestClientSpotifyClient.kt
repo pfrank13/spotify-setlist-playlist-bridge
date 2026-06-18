@@ -48,7 +48,7 @@ class RestClientSpotifyClient(
 				.uri { builder ->
 					builder.path(SpotifyClient.SEARCH_URI)
 						.queryParam(SpotifyClient.QUERY_PARAM, q)
-						.queryParam(SpotifyClient.TYPE_PARAM, type.joinToString(",") { it.value })
+						.queryParam(SpotifyClient.TYPE_PARAM, type.joinToString(","))
 					market?.let { builder.queryParam(SpotifyClient.MARKET_PARAM, it) }
 					limit?.let { builder.queryParam(SpotifyClient.LIMIT_PARAM, it) }
 					offset?.let { builder.queryParam(SpotifyClient.OFFSET_PARAM, it) }

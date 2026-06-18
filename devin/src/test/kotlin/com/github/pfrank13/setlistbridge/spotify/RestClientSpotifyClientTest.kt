@@ -190,6 +190,10 @@ class RestClientSpotifyClientTest {
 		val response = client.searchForItems(
 			q = "Doxy Miles Davis",
 			type = setOf(SearchItemType.TRACK),
+			market = null,
+			limit = null,
+			offset = null,
+			includeExternal = null,
 		)
 
 		assertThat(response).isEqualTo(EXPECTED_SEARCH_RESPONSE)
@@ -233,7 +237,14 @@ class RestClientSpotifyClientTest {
 		)
 
 		assertThatThrownBy {
-			client.searchForItems(q = "test", type = setOf(SearchItemType.TRACK))
+			client.searchForItems(
+				q = "test",
+				type = setOf(SearchItemType.TRACK),
+				market = null,
+				limit = null,
+				offset = null,
+				includeExternal = null,
+			)
 		}
 			.isInstanceOf(SpotifyException::class.java)
 	}
@@ -245,82 +256,6 @@ class RestClientSpotifyClientTest {
 		private const val PLAYLIST_ID = "3cEYpjA9oz9GiPac4AsH4n"
 
 		private val OBJECT_MAPPER = jacksonObjectMapper()
-
-		private val SEARCH_RESPONSE_JSON = """
-			{
-			  "tracks": {
-			    "href": "https://api.spotify.com/v1/search?query=Doxy+Miles+Davis&type=track&offset=0&limit=5",
-			    "limit": 5,
-			    "next": null,
-			    "offset": 0,
-			    "previous": null,
-			    "total": 1,
-			    "items": [
-			      {
-			        "id": "4iV5W9uYEdYUVa79Axb7Rh",
-			        "name": "Doxy",
-			        "href": "https://api.spotify.com/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh",
-			        "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
-			        "type": "track",
-			        "external_urls": {
-			          "spotify": "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
-			        },
-			        "disc_number": 1,
-			        "duration_ms": 324000,
-			        "explicit": false,
-			        "external_ids": {
-			          "isrc": "USPR35507295"
-			        },
-			        "is_playable": true,
-			        "track_number": 5,
-			        "is_local": false,
-			        "album": {
-			          "id": "2cRMVS71c49Pf5SnIlJX3U",
-			          "name": "Bags' Groove",
-			          "href": "https://api.spotify.com/v1/albums/2cRMVS71c49Pf5SnIlJX3U",
-			          "uri": "spotify:album:2cRMVS71c49Pf5SnIlJX3U",
-			          "album_type": "album",
-			          "total_tracks": 5,
-			          "external_urls": {
-			            "spotify": "https://open.spotify.com/album/2cRMVS71c49Pf5SnIlJX3U"
-			          },
-			          "release_date": "1957-01-01",
-			          "release_date_precision": "day",
-			          "images": [
-			            {
-			              "url": "https://i.scdn.co/image/ab67616d0000b273example",
-			              "height": 640,
-			              "width": 640
-			            }
-			          ],
-			          "artists": [
-			            {
-			              "id": "0kbYTNQb4Pb1rY2MnLRbKj",
-			              "name": "Miles Davis",
-			              "href": "https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj",
-			              "uri": "spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj",
-			              "external_urls": {
-			                "spotify": "https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj"
-			              }
-			            }
-			          ]
-			        },
-			        "artists": [
-			          {
-			            "id": "0kbYTNQb4Pb1rY2MnLRbKj",
-			            "name": "Miles Davis",
-			            "href": "https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj",
-			            "uri": "spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj",
-			            "external_urls": {
-			              "spotify": "https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj"
-			            }
-			          }
-			        ]
-			      }
-			    ]
-			  }
-			}
-		""".trimIndent()
 
 		@JvmStatic
 		@RegisterExtension
@@ -395,6 +330,8 @@ class RestClientSpotifyClientTest {
 			episodes = null,
 			audiobooks = null,
 		)
+
+		private val SEARCH_RESPONSE_JSON = OBJECT_MAPPER.writeValueAsString(EXPECTED_SEARCH_RESPONSE)
 
 		private val EXPECTED_SNAPSHOT_RESPONSE = SnapshotResponse(
 			snapshotId = "JbtmHBDBAYu3/bt8BOXKjzKx3i0b6LCa/wVjyl6qQ2Yf6nFXkbmzuFMs",
