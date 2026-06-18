@@ -175,8 +175,8 @@ class RestClientSpotifyClientTest {
 	fun `searchForItems sends Bearer token and returns deserialized search response`() {
 		wireMock.stubFor(
 			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
-				.withQueryParam("q", equalTo("Doxy Miles Davis"))
-				.withQueryParam("type", equalTo("track"))
+				.withQueryParam(SpotifyClient.QUERY_PARAM, equalTo("Doxy Miles Davis"))
+				.withQueryParam(SpotifyClient.TYPE_PARAM, equalTo("track"))
 				.withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer $ACCESS_TOKEN"))
 				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
 				.willReturn(
@@ -192,35 +192,19 @@ class RestClientSpotifyClientTest {
 			type = setOf(SearchItemType.TRACK),
 		)
 
-		assertThat(response.tracks).isNotNull
-		assertThat(response.tracks!!.total).isEqualTo(1)
-		assertThat(response.tracks!!.items).hasSize(1)
-
-		val track = response.tracks!!.items[0]
-		assertThat(track.id).isEqualTo("4iV5W9uYEdYUVa79Axb7Rh")
-		assertThat(track.name).isEqualTo("Doxy")
-		assertThat(track.uri).isEqualTo("spotify:track:4iV5W9uYEdYUVa79Axb7Rh")
-		assertThat(track.durationMs).isEqualTo(324000)
-		assertThat(track.explicit).isFalse()
-		assertThat(track.trackNumber).isEqualTo(5)
-		assertThat(track.discNumber).isEqualTo(1)
-		assertThat(track.isLocal).isFalse()
-		assertThat(track.artists).hasSize(1)
-		assertThat(track.artists[0].name).isEqualTo("Miles Davis")
-		assertThat(track.album).isNotNull
-		assertThat(track.album!!.name).isEqualTo("Bags' Groove")
+		assertThat(response).isEqualTo(EXPECTED_SEARCH_RESPONSE)
 	}
 
 	@Test
 	fun `searchForItems sends optional query parameters`() {
 		wireMock.stubFor(
 			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
-				.withQueryParam("q", equalTo("test"))
-				.withQueryParam("type", equalTo("track,album"))
-				.withQueryParam("market", equalTo("US"))
-				.withQueryParam("limit", equalTo("10"))
-				.withQueryParam("offset", equalTo("5"))
-				.withQueryParam("include_external", equalTo("audio"))
+				.withQueryParam(SpotifyClient.QUERY_PARAM, equalTo("test"))
+				.withQueryParam(SpotifyClient.TYPE_PARAM, equalTo("track,album"))
+				.withQueryParam(SpotifyClient.MARKET_PARAM, equalTo("US"))
+				.withQueryParam(SpotifyClient.LIMIT_PARAM, equalTo("10"))
+				.withQueryParam(SpotifyClient.OFFSET_PARAM, equalTo("5"))
+				.withQueryParam(SpotifyClient.INCLUDE_EXTERNAL_PARAM, equalTo("audio"))
 				.willReturn(
 					aResponse()
 						.withStatus(200)
@@ -238,7 +222,7 @@ class RestClientSpotifyClientTest {
 			includeExternal = "audio",
 		)
 
-		assertThat(response).isNotNull
+		assertThat(response).isEqualTo(EXPECTED_SEARCH_RESPONSE)
 	}
 
 	@Test
@@ -341,6 +325,76 @@ class RestClientSpotifyClientTest {
 		@JvmStatic
 		@RegisterExtension
 		val wireMock: WireMockExtension = WireMockExtension.newInstance().build()
+
+		private val EXPECTED_SEARCH_RESPONSE = SearchResponse(
+			tracks = PaginatedResult(
+				href = "https://api.spotify.com/v1/search?query=Doxy+Miles+Davis&type=track&offset=0&limit=5",
+				limit = 5,
+				next = null,
+				offset = 0,
+				previous = null,
+				total = 1,
+				items = listOf(
+					TrackItem(
+						id = "4iV5W9uYEdYUVa79Axb7Rh",
+						name = "Doxy",
+						href = URI("https://api.spotify.com/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh"),
+						uri = URI("spotify:track:4iV5W9uYEdYUVa79Axb7Rh"),
+						type = SearchItemType.TRACK,
+						externalUrls = mapOf("spotify" to URI("https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh")),
+						discNumber = 1,
+						durationMs = 324000,
+						explicit = false,
+						externalIds = mapOf("isrc" to "USPR35507295"),
+						isPlayable = true,
+						trackNumber = 5,
+						isLocal = false,
+						album = SimplifiedAlbum(
+							id = "2cRMVS71c49Pf5SnIlJX3U",
+							name = "Bags' Groove",
+							href = URI("https://api.spotify.com/v1/albums/2cRMVS71c49Pf5SnIlJX3U"),
+							uri = URI("spotify:album:2cRMVS71c49Pf5SnIlJX3U"),
+							albumType = "album",
+							totalTracks = 5,
+							externalUrls = mapOf("spotify" to URI("https://open.spotify.com/album/2cRMVS71c49Pf5SnIlJX3U")),
+							releaseDate = "1957-01-01",
+							releaseDatePrecision = "day",
+							images = listOf(
+								SpotifyImage(
+									url = URI("https://i.scdn.co/image/ab67616d0000b273example"),
+									height = 640,
+									width = 640,
+								),
+							),
+							artists = listOf(
+								SimplifiedArtist(
+									id = "0kbYTNQb4Pb1rY2MnLRbKj",
+									name = "Miles Davis",
+									href = URI("https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj"),
+									uri = URI("spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj"),
+									externalUrls = mapOf("spotify" to URI("https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj")),
+								),
+							),
+						),
+						artists = listOf(
+							SimplifiedArtist(
+								id = "0kbYTNQb4Pb1rY2MnLRbKj",
+								name = "Miles Davis",
+								href = URI("https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj"),
+								uri = URI("spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj"),
+								externalUrls = mapOf("spotify" to URI("https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj")),
+							),
+						),
+					),
+				),
+			),
+			albums = null,
+			artists = null,
+			playlists = null,
+			shows = null,
+			episodes = null,
+			audiobooks = null,
+		)
 
 		private val EXPECTED_SNAPSHOT_RESPONSE = SnapshotResponse(
 			snapshotId = "JbtmHBDBAYu3/bt8BOXKjzKx3i0b6LCa/wVjyl6qQ2Yf6nFXkbmzuFMs",

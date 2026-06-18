@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SearchResponse(
-	val tracks: PaginatedResult<TrackItem>? = null,
-	val albums: PaginatedResult<AlbumItem>? = null,
-	val artists: PaginatedResult<ArtistItem>? = null,
-	val playlists: PaginatedResult<PlaylistItem>? = null,
-	val shows: PaginatedResult<ShowItem>? = null,
-	val episodes: PaginatedResult<EpisodeItem>? = null,
-	val audiobooks: PaginatedResult<AudiobookItem>? = null,
+	val tracks: PaginatedResult<TrackItem>?,
+	val albums: PaginatedResult<AlbumItem>?,
+	val artists: PaginatedResult<ArtistItem>?,
+	val playlists: PaginatedResult<PlaylistItem>?,
+	val shows: PaginatedResult<ShowItem>?,
+	val episodes: PaginatedResult<EpisodeItem>?,
+	val audiobooks: PaginatedResult<AudiobookItem>?,
 )

@@ -49,5 +49,12 @@ interface SpotifyClient {
 		const val CREATE_PLAYLIST_URI = "/v1/me/playlists"
 		const val ADD_ITEMS_TO_PLAYLIST_URI = "/v1/playlists/{playlistId}/items"
 		const val SEARCH_URI = "/v1/search"
+
+		const val QUERY_PARAM = "q"
+		const val TYPE_PARAM = "type"
+		const val MARKET_PARAM = "market"
+		const val LIMIT_PARAM = "limit"
+		const val OFFSET_PARAM = "offset"
+		const val INCLUDE_EXTERNAL_PARAM = "include_external"
 	}
 }

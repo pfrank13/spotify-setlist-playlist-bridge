@@ -13,9 +13,9 @@ import java.net.URI
 abstract class Item(
 	open val id: String,
 	open val name: String,
-	open val href: String,
-	open val uri: String,
-	open val type: String,
+	open val href: URI,
+	open val uri: URI,
+	open val type: SearchItemType,
 	@JsonProperty("external_urls")
 	open val externalUrls: Map<String, URI>,
 )
@@ -24,9 +24,9 @@ abstract class Item(
 data class TrackItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 	@JsonProperty("disc_number")
@@ -50,8 +50,8 @@ data class TrackItem(
 data class SimplifiedAlbum(
 	val id: String,
 	val name: String,
-	val href: String,
-	val uri: String,
+	val href: URI,
+	val uri: URI,
 	@JsonProperty("album_type")
 	val albumType: String,
 	@JsonProperty("total_tracks")
@@ -70,15 +70,15 @@ data class SimplifiedAlbum(
 data class SimplifiedArtist(
 	val id: String,
 	val name: String,
-	val href: String?,
-	val uri: String,
+	val href: URI?,
+	val uri: URI,
 	@JsonProperty("external_urls")
 	val externalUrls: Map<String, URI>,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SpotifyImage(
-	val url: String,
+	val url: URI,
 	val height: Int?,
 	val width: Int?,
 )
@@ -87,9 +87,9 @@ data class SpotifyImage(
 data class AlbumItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)
@@ -98,9 +98,9 @@ data class AlbumItem(
 data class ArtistItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)
@@ -109,9 +109,9 @@ data class ArtistItem(
 data class PlaylistItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)
@@ -120,9 +120,9 @@ data class PlaylistItem(
 data class ShowItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)
@@ -131,9 +131,9 @@ data class ShowItem(
 data class EpisodeItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)
@@ -142,9 +142,9 @@ data class EpisodeItem(
 data class AudiobookItem(
 	override val id: String,
 	override val name: String,
-	override val href: String,
-	override val uri: String,
-	override val type: String,
+	override val href: URI,
+	override val uri: URI,
+	override val type: SearchItemType,
 	@JsonProperty("external_urls")
 	override val externalUrls: Map<String, URI>,
 ) : Item(id, name, href, uri, type, externalUrls)

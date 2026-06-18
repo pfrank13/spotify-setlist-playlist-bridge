@@ -47,12 +47,12 @@ class RestClientSpotifyClient(
 			return spotifyRestClient.get()
 				.uri { builder ->
 					builder.path(SpotifyClient.SEARCH_URI)
-						.queryParam("q", q)
-						.queryParam("type", type.joinToString(",") { it.value })
-					market?.let { builder.queryParam("market", it) }
-					limit?.let { builder.queryParam("limit", it) }
-					offset?.let { builder.queryParam("offset", it) }
-					includeExternal?.let { builder.queryParam("include_external", it) }
+						.queryParam(SpotifyClient.QUERY_PARAM, q)
+						.queryParam(SpotifyClient.TYPE_PARAM, type.joinToString(",") { it.value })
+					market?.let { builder.queryParam(SpotifyClient.MARKET_PARAM, it) }
+					limit?.let { builder.queryParam(SpotifyClient.LIMIT_PARAM, it) }
+					offset?.let { builder.queryParam(SpotifyClient.OFFSET_PARAM, it) }
+					includeExternal?.let { builder.queryParam(SpotifyClient.INCLUDE_EXTERNAL_PARAM, it) }
 					builder.build()
 				}
 				.retrieve()

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
  * Generic paginated result wrapper used in Spotify Search API responses.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class PaginatedResult<T>(
+data class PaginatedResult<T : Item>(
 	val href: String,
 	val limit: Int,
 	val next: String?,
