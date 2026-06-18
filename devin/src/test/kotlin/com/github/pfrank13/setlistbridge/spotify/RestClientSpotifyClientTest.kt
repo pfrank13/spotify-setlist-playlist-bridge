@@ -4,8 +4,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.containing
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import org.assertj.core.api.Assertions.assertThat
@@ -169,6 +171,84 @@ class RestClientSpotifyClientTest {
 			.isInstanceOf(SpotifyException::class.java)
 	}
 
+	@Test
+	fun `searchForItems sends Bearer token and returns deserialized search response`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.withQueryParam(SpotifyClient.QUERY_PARAM, equalTo("Doxy Miles Davis"))
+				.withQueryParam(SpotifyClient.TYPE_PARAM, equalTo("track"))
+				.withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer $ACCESS_TOKEN"))
+				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
+				.willReturn(
+					aResponse()
+						.withStatus(200)
+						.withHeader("Content-Type", "application/json")
+						.withBody(SEARCH_RESPONSE_JSON),
+				),
+		)
+
+		val response = client.searchForItems(
+			q = "Doxy Miles Davis",
+			type = setOf(SearchItemType.TRACK),
+			market = null,
+			limit = null,
+			offset = null,
+			includeExternal = null,
+		)
+
+		assertThat(response).isEqualTo(EXPECTED_SEARCH_RESPONSE)
+	}
+
+	@Test
+	fun `searchForItems sends optional query parameters`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.withQueryParam(SpotifyClient.QUERY_PARAM, equalTo("test"))
+				.withQueryParam(SpotifyClient.TYPE_PARAM, equalTo("track,album"))
+				.withQueryParam(SpotifyClient.MARKET_PARAM, equalTo("US"))
+				.withQueryParam(SpotifyClient.LIMIT_PARAM, equalTo("10"))
+				.withQueryParam(SpotifyClient.OFFSET_PARAM, equalTo("5"))
+				.withQueryParam(SpotifyClient.INCLUDE_EXTERNAL_PARAM, equalTo("audio"))
+				.willReturn(
+					aResponse()
+						.withStatus(200)
+						.withHeader("Content-Type", "application/json")
+						.withBody(SEARCH_RESPONSE_JSON),
+				),
+		)
+
+		val response = client.searchForItems(
+			q = "test",
+			type = setOf(SearchItemType.TRACK, SearchItemType.ALBUM),
+			market = "US",
+			limit = 10,
+			offset = 5,
+			includeExternal = "audio",
+		)
+
+		assertThat(response).isEqualTo(EXPECTED_SEARCH_RESPONSE)
+	}
+
+	@Test
+	fun `searchForItems wraps API errors in SpotifyException`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.willReturn(aResponse().withStatus(401)),
+		)
+
+		assertThatThrownBy {
+			client.searchForItems(
+				q = "test",
+				type = setOf(SearchItemType.TRACK),
+				market = null,
+				limit = null,
+				offset = null,
+				includeExternal = null,
+			)
+		}
+			.isInstanceOf(SpotifyException::class.java)
+	}
+
 	companion object {
 		private const val CLIENT_ID = "test-client-id"
 		private const val ACCESS_TOKEN = "test-access-token"
@@ -180,6 +260,78 @@ class RestClientSpotifyClientTest {
 		@JvmStatic
 		@RegisterExtension
 		val wireMock: WireMockExtension = WireMockExtension.newInstance().build()
+
+		private val EXPECTED_SEARCH_RESPONSE = SearchResponse(
+			tracks = PaginatedResult(
+				href = "https://api.spotify.com/v1/search?query=Doxy+Miles+Davis&type=track&offset=0&limit=5",
+				limit = 5,
+				next = null,
+				offset = 0,
+				previous = null,
+				total = 1,
+				items = listOf(
+					TrackItem(
+						id = "4iV5W9uYEdYUVa79Axb7Rh",
+						name = "Doxy",
+						href = URI("https://api.spotify.com/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh"),
+						uri = URI("spotify:track:4iV5W9uYEdYUVa79Axb7Rh"),
+						type = SearchItemType.TRACK,
+						externalUrls = mapOf("spotify" to URI("https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh")),
+						discNumber = 1,
+						durationMs = 324000,
+						explicit = false,
+						externalIds = mapOf("isrc" to "USPR35507295"),
+						isPlayable = true,
+						trackNumber = 5,
+						isLocal = false,
+						album = SimplifiedAlbum(
+							id = "2cRMVS71c49Pf5SnIlJX3U",
+							name = "Bags' Groove",
+							href = URI("https://api.spotify.com/v1/albums/2cRMVS71c49Pf5SnIlJX3U"),
+							uri = URI("spotify:album:2cRMVS71c49Pf5SnIlJX3U"),
+							albumType = "album",
+							totalTracks = 5,
+							externalUrls = mapOf("spotify" to URI("https://open.spotify.com/album/2cRMVS71c49Pf5SnIlJX3U")),
+							releaseDate = "1957-01-01",
+							releaseDatePrecision = "day",
+							images = listOf(
+								SpotifyImage(
+									url = URI("https://i.scdn.co/image/ab67616d0000b273example"),
+									height = 640,
+									width = 640,
+								),
+							),
+							artists = listOf(
+								SimplifiedArtist(
+									id = "0kbYTNQb4Pb1rY2MnLRbKj",
+									name = "Miles Davis",
+									href = URI("https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj"),
+									uri = URI("spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj"),
+									externalUrls = mapOf("spotify" to URI("https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj")),
+								),
+							),
+						),
+						artists = listOf(
+							SimplifiedArtist(
+								id = "0kbYTNQb4Pb1rY2MnLRbKj",
+								name = "Miles Davis",
+								href = URI("https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj"),
+								uri = URI("spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj"),
+								externalUrls = mapOf("spotify" to URI("https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj")),
+							),
+						),
+					),
+				),
+			),
+			albums = null,
+			artists = null,
+			playlists = null,
+			shows = null,
+			episodes = null,
+			audiobooks = null,
+		)
+
+		private val SEARCH_RESPONSE_JSON = OBJECT_MAPPER.writeValueAsString(EXPECTED_SEARCH_RESPONSE)
 
 		private val EXPECTED_SNAPSHOT_RESPONSE = SnapshotResponse(
 			snapshotId = "JbtmHBDBAYu3/bt8BOXKjzKx3i0b6LCa/wVjyl6qQ2Yf6nFXkbmzuFMs",
