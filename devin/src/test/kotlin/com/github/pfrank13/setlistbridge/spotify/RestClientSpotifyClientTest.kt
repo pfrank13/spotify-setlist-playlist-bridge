@@ -4,8 +4,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.containing
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import org.assertj.core.api.Assertions.assertThat
@@ -169,6 +171,89 @@ class RestClientSpotifyClientTest {
 			.isInstanceOf(SpotifyException::class.java)
 	}
 
+	@Test
+	fun `searchForItems sends Bearer token and returns deserialized search response`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.withQueryParam("q", equalTo("Doxy Miles Davis"))
+				.withQueryParam("type", equalTo("track"))
+				.withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer $ACCESS_TOKEN"))
+				.withHeader(HttpHeaders.ACCEPT, containing(MediaType.APPLICATION_JSON_VALUE))
+				.willReturn(
+					aResponse()
+						.withStatus(200)
+						.withHeader("Content-Type", "application/json")
+						.withBody(SEARCH_RESPONSE_JSON),
+				),
+		)
+
+		val response = client.searchForItems(
+			q = "Doxy Miles Davis",
+			type = setOf(SearchItemType.TRACK),
+		)
+
+		assertThat(response.tracks).isNotNull
+		assertThat(response.tracks!!.total).isEqualTo(1)
+		assertThat(response.tracks!!.items).hasSize(1)
+
+		val track = response.tracks!!.items[0]
+		assertThat(track.id).isEqualTo("4iV5W9uYEdYUVa79Axb7Rh")
+		assertThat(track.name).isEqualTo("Doxy")
+		assertThat(track.uri).isEqualTo("spotify:track:4iV5W9uYEdYUVa79Axb7Rh")
+		assertThat(track.durationMs).isEqualTo(324000)
+		assertThat(track.explicit).isFalse()
+		assertThat(track.trackNumber).isEqualTo(5)
+		assertThat(track.discNumber).isEqualTo(1)
+		assertThat(track.isLocal).isFalse()
+		assertThat(track.artists).hasSize(1)
+		assertThat(track.artists[0].name).isEqualTo("Miles Davis")
+		assertThat(track.album).isNotNull
+		assertThat(track.album!!.name).isEqualTo("Bags' Groove")
+	}
+
+	@Test
+	fun `searchForItems sends optional query parameters`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.withQueryParam("q", equalTo("test"))
+				.withQueryParam("type", equalTo("track,album"))
+				.withQueryParam("market", equalTo("US"))
+				.withQueryParam("limit", equalTo("10"))
+				.withQueryParam("offset", equalTo("5"))
+				.withQueryParam("include_external", equalTo("audio"))
+				.willReturn(
+					aResponse()
+						.withStatus(200)
+						.withHeader("Content-Type", "application/json")
+						.withBody(SEARCH_RESPONSE_JSON),
+				),
+		)
+
+		val response = client.searchForItems(
+			q = "test",
+			type = setOf(SearchItemType.TRACK, SearchItemType.ALBUM),
+			market = "US",
+			limit = 10,
+			offset = 5,
+			includeExternal = "audio",
+		)
+
+		assertThat(response).isNotNull
+	}
+
+	@Test
+	fun `searchForItems wraps API errors in SpotifyException`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo(SpotifyClient.SEARCH_URI))
+				.willReturn(aResponse().withStatus(401)),
+		)
+
+		assertThatThrownBy {
+			client.searchForItems(q = "test", type = setOf(SearchItemType.TRACK))
+		}
+			.isInstanceOf(SpotifyException::class.java)
+	}
+
 	companion object {
 		private const val CLIENT_ID = "test-client-id"
 		private const val ACCESS_TOKEN = "test-access-token"
@@ -176,6 +261,82 @@ class RestClientSpotifyClientTest {
 		private const val PLAYLIST_ID = "3cEYpjA9oz9GiPac4AsH4n"
 
 		private val OBJECT_MAPPER = jacksonObjectMapper()
+
+		private val SEARCH_RESPONSE_JSON = """
+			{
+			  "tracks": {
+			    "href": "https://api.spotify.com/v1/search?query=Doxy+Miles+Davis&type=track&offset=0&limit=5",
+			    "limit": 5,
+			    "next": null,
+			    "offset": 0,
+			    "previous": null,
+			    "total": 1,
+			    "items": [
+			      {
+			        "id": "4iV5W9uYEdYUVa79Axb7Rh",
+			        "name": "Doxy",
+			        "href": "https://api.spotify.com/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh",
+			        "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
+			        "type": "track",
+			        "external_urls": {
+			          "spotify": "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+			        },
+			        "disc_number": 1,
+			        "duration_ms": 324000,
+			        "explicit": false,
+			        "external_ids": {
+			          "isrc": "USPR35507295"
+			        },
+			        "is_playable": true,
+			        "track_number": 5,
+			        "is_local": false,
+			        "album": {
+			          "id": "2cRMVS71c49Pf5SnIlJX3U",
+			          "name": "Bags' Groove",
+			          "href": "https://api.spotify.com/v1/albums/2cRMVS71c49Pf5SnIlJX3U",
+			          "uri": "spotify:album:2cRMVS71c49Pf5SnIlJX3U",
+			          "album_type": "album",
+			          "total_tracks": 5,
+			          "external_urls": {
+			            "spotify": "https://open.spotify.com/album/2cRMVS71c49Pf5SnIlJX3U"
+			          },
+			          "release_date": "1957-01-01",
+			          "release_date_precision": "day",
+			          "images": [
+			            {
+			              "url": "https://i.scdn.co/image/ab67616d0000b273example",
+			              "height": 640,
+			              "width": 640
+			            }
+			          ],
+			          "artists": [
+			            {
+			              "id": "0kbYTNQb4Pb1rY2MnLRbKj",
+			              "name": "Miles Davis",
+			              "href": "https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj",
+			              "uri": "spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj",
+			              "external_urls": {
+			                "spotify": "https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj"
+			              }
+			            }
+			          ]
+			        },
+			        "artists": [
+			          {
+			            "id": "0kbYTNQb4Pb1rY2MnLRbKj",
+			            "name": "Miles Davis",
+			            "href": "https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rY2MnLRbKj",
+			            "uri": "spotify:artist:0kbYTNQb4Pb1rY2MnLRbKj",
+			            "external_urls": {
+			              "spotify": "https://open.spotify.com/artist/0kbYTNQb4Pb1rY2MnLRbKj"
+			            }
+			          }
+			        ]
+			      }
+			    ]
+			  }
+			}
+		""".trimIndent()
 
 		@JvmStatic
 		@RegisterExtension

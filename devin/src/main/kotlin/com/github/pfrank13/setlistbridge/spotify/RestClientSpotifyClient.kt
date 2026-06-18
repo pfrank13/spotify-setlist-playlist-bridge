@@ -34,4 +34,32 @@ class RestClientSpotifyClient(
 			throw SpotifyException("Failed to add items to playlist '$playlistId'", ex)
 		}
 	}
+
+	override fun searchForItems(
+		q: String,
+		type: Set<SearchItemType>,
+		market: String?,
+		limit: Int?,
+		offset: Int?,
+		includeExternal: String?,
+	): SearchResponse {
+		try {
+			return spotifyRestClient.get()
+				.uri { builder ->
+					builder.path(SpotifyClient.SEARCH_URI)
+						.queryParam("q", q)
+						.queryParam("type", type.joinToString(",") { it.value })
+					market?.let { builder.queryParam("market", it) }
+					limit?.let { builder.queryParam("limit", it) }
+					offset?.let { builder.queryParam("offset", it) }
+					includeExternal?.let { builder.queryParam("include_external", it) }
+					builder.build()
+				}
+				.retrieve()
+				.body(SearchResponse::class.java)
+				?: throw SpotifyException("Empty response body when searching for '$q'")
+		} catch (ex: RestClientException) {
+			throw SpotifyException("Failed to search for '$q'", ex)
+		}
+	}
 }
