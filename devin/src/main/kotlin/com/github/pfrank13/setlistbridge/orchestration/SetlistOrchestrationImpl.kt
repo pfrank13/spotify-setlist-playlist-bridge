@@ -19,47 +19,53 @@ class SetlistOrchestrationImpl(
 	private val log = LoggerFactory.getLogger(SetlistOrchestrationImpl::class.java)
 
 	override fun transferSetlist(setlistFmId: String): SetlistPlaylist {
+		// TODO: should getSetListById return a nullable Setlist so a missing setlist can be handled explicitly?
 		val setlist = setlistFmClient.getSetListById(setlistFmId)
-		val playlist = spotifyClient.createPlaylist(CreatePlaylistRequest(name = playlistName(setlist)))
+		val playlist = spotifyClient.createPlaylist(CreatePlaylistRequest(playlistName(setlist)))
 
-		val artist = setlist.artist.name
+		val artistName = setlist.artist.name
 		val songs = LinkedHashSet<SetlistSong>()
 
 		setlist.set.flatMap { it.song }.forEach { song ->
 			val response = spotifyClient.searchForItems(
-				q = "$artist ${song.name}",
-				type = setOf(SearchItemType.TRACK),
-				market = null,
-				limit = null,
-				offset = null,
-				includeExternal = null,
+				"$artistName ${song.name}",
+				setOf(SearchItemType.TRACK),
+				null,
+				1,
+				0,
+				null,
 			)
 
 			val track = response.tracks?.items?.firstOrNull()
 			if (track == null) {
-				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, artist)
+				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, artistName)
 				return@forEach
 			}
 
-			spotifyClient.addItemsToPlaylist(
+			// TODO: adds a single track per request; could be optimized to batch all uris into one addItemsToPlaylist call.
+			val snapshot = spotifyClient.addItemsToPlaylist(
 				playlist.id,
-				AddItemsToPlaylistRequest(uris = listOf(track.uri.toString())),
+				AddItemsToPlaylistRequest(listOf(track.uri.toString())),
+			)
+			log.info(
+				"Added song '{}' to playlist '{}' (new snapshot id '{}')",
+				track.name,
+				playlist.id,
+				snapshot.snapshotId,
 			)
 
+			val trackArtist = track.artists.firstOrNull()
 			songs.add(
 				SetlistSong(
-					externalSongId = track.id,
-					artist = track.artists.firstOrNull()?.name ?: artist,
-					name = track.name,
-					runtime = track.durationMs.milliseconds,
+					track.id,
+					Artist(trackArtist?.id ?: "", trackArtist?.name ?: artistName),
+					track.name,
+					track.durationMs.milliseconds,
 				),
 			)
 		}
 
-		return SetlistPlaylist(
-			externalPlaylistId = playlist.id,
-			songs = songs,
-		)
+		return SetlistPlaylist(playlist.id, playlist.name, songs)
 	}
 
 	private fun playlistName(setlist: Setlist): String =

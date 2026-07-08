@@ -10,6 +10,7 @@ import kotlin.time.Duration
  */
 data class SetlistPlaylist(
 	val externalPlaylistId: String,
+	val name: String,
 	val songs: Set<SetlistSong>,
 )
 
@@ -18,7 +19,15 @@ data class SetlistPlaylist(
  */
 data class SetlistSong(
 	val externalSongId: String,
-	val artist: String,
+	val artist: Artist,
 	val name: String,
 	val runtime: Duration,
+)
+
+/**
+ * Orchestration-tier view of the artist of a [SetlistSong].
+ */
+data class Artist(
+	val externalArtistId: String,
+	val name: String,
 )
