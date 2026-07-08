@@ -26,6 +26,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.assertj:assertj-core")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 	testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 	testImplementation("com.microsoft.playwright:playwright:1.52.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
