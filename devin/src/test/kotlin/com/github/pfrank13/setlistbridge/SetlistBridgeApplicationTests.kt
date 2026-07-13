@@ -8,6 +8,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.microsoft.playwright.Browser
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
+import com.microsoft.playwright.options.RequestOptions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
@@ -20,6 +21,7 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import java.util.Base64
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -69,6 +71,45 @@ class SetlistBridgeApplicationTests {
 		val scope = params["scope"]?.firstValue()
 		assertThat(scope).contains("playlist-modify-public")
 		assertThat(scope).contains("playlist-modify-private")
+	}
+
+	@Test
+	fun `starting a setlist migration sets a cookie and redirects into the OAuth2 flow`() {
+		val encoded = Base64.getUrlEncoder().encodeToString("setlist-fm-id".toByteArray())
+
+		val response = page.request().post(
+			"http://localhost:$port/api/setlist/$encoded",
+			RequestOptions.create().setMaxRedirects(0),
+		)
+
+		assertThat(response.status()).isEqualTo(302)
+		assertThat(response.headers()["location"]).isEqualTo("/oauth2/authorization/spotify")
+		assertThat(response.headers()["set-cookie"]).contains("externalSetlistId=")
+	}
+
+	@Test
+	fun `starting a setlist migration follows through to the Spotify authorization endpoint`() {
+		wireMock.stubFor(
+			get(urlPathEqualTo("/authorize"))
+				.willReturn(aResponse().withStatus(200).withBody("mock-authorize-page")),
+		)
+
+		val encoded = Base64.getUrlEncoder().encodeToString("setlist-fm-id".toByteArray())
+
+		val response = page.request().post("http://localhost:$port/api/setlist/$encoded")
+
+		assertThat(response.ok()).isTrue()
+		assertThat(wireMock.findAll(getRequestedFor(urlPathEqualTo("/authorize")))).hasSize(1)
+	}
+
+	@Test
+	fun `starting a setlist migration returns 400 for an invalid base64 id`() {
+		val response = page.request().post(
+			"http://localhost:$port/api/setlist/not!valid!base64",
+			RequestOptions.create().setMaxRedirects(0),
+		)
+
+		assertThat(response.status()).isEqualTo(400)
 	}
 
 	companion object {

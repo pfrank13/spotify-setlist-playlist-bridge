@@ -13,4 +13,13 @@ interface SetlistOrchestration {
 	 * @return a [SetlistPlaylist] describing the created playlist and the songs added to it
 	 */
 	fun transferSetlist(setlistFmId: String): SetlistPlaylist
+
+	/**
+	 * Stores the given setlist.fm id under a freshly generated key so the migration
+	 * can be resumed once the Spotify OAuth2 flow completes.
+	 *
+	 * @param externalSetlistId the setlist.fm id to migrate
+	 * @return the generated key the id was stored under
+	 */
+	fun startSetlistMigration(externalSetlistId: String): String
 }
