@@ -8,6 +8,8 @@ import com.github.pfrank13.setlistbridge.spotify.SearchItemType
 import com.github.pfrank13.setlistbridge.spotify.SpotifyClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 @Component
@@ -17,6 +19,14 @@ class SetlistOrchestrationImpl(
 ) : SetlistOrchestration {
 
 	private val log = LoggerFactory.getLogger(SetlistOrchestrationImpl::class.java)
+
+	private val pendingMigrations = ConcurrentHashMap<String, String>()
+
+	override fun startSetlistMigration(externalSetlistId: String): String {
+		val key = UUID.randomUUID().toString()
+		pendingMigrations[key] = externalSetlistId
+		return key
+	}
 
 	override fun transferSetlist(setlistFmId: String): SetlistPlaylist {
 		// TODO: should getSetListById return a nullable Setlist so a missing setlist can be handled explicitly?

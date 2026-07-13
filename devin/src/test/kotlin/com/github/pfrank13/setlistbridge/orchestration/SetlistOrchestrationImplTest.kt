@@ -114,6 +114,16 @@ class SetlistOrchestrationImplTest {
 		verify(spotifyClient, never()).addItemsToPlaylist(any(), any())
 	}
 
+	@Test
+	fun `startSetlistMigration returns a fresh key for each call`() {
+		val keyOne = orchestration.startSetlistMigration("setlist-1")
+		val keyTwo = orchestration.startSetlistMigration("setlist-1")
+
+		assertThat(keyOne).isNotBlank()
+		assertThat(keyTwo).isNotBlank()
+		assertThat(keyOne).isNotEqualTo(keyTwo)
+	}
+
 	private fun searchFor(query: String): SearchResponse =
 		spotifyClient.searchForItems(
 			eq(query),
