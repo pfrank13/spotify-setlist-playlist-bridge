@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 import java.util.Base64
@@ -24,7 +24,7 @@ class SetlistController(
 	 * for safe keeping, stores the returned key in a cookie and redirects into the
 	 * Spotify OAuth2 flow so the migration can complete once the user has authorized.
 	 */
-	@PostMapping("/api/setlist/{externalSetlistId}")
+	@GetMapping("/api/setlist/{externalSetlistId}")
 	fun startSetlistMigration(@PathVariable externalSetlistId: String): ResponseEntity<Void> {
 		val decoded = String(Base64.getUrlDecoder().decode(externalSetlistId), Charsets.UTF_8)
 		val key = setlistOrchestration.startSetlistMigration(decoded)

@@ -16,9 +16,6 @@ class SecurityConfig {
 				authorize("/api/setlist/**", permitAll)
 				authorize(anyRequest, authenticated)
 			}
-			csrf {
-				ignoringRequestMatchers("/api/setlist/**")
-			}
 			oauth2Client { }
 		}
 		return http.build()
