@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.named
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
 	kotlin("jvm") version "2.3.0"
 	kotlin("plugin.spring") version "2.3.0"
@@ -40,4 +43,10 @@ kotlin {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.named<BootRun>("bootRun") {
+	classpath = sourceSets["test"].runtimeClasspath
+	classpath(configurations["developmentOnly"])
+	args("--spring.profiles.active=dev")
 }

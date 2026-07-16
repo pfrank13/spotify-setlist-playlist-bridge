@@ -1,21 +1,30 @@
 package com.github.pfrank13.setlistbridge.web
 
 import com.github.pfrank13.setlistbridge.orchestration.SetlistOrchestration
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
+import java.security.Principal
 import java.util.Base64
+
+data class Dummy(val value: String)
 
 @RestController
 class SetlistController(
 	private val setlistOrchestration: SetlistOrchestration,
 ) {
+
+	companion object {
+		private val LOG = LoggerFactory.getLogger(SetlistController::class.java)
+	}
 
 	/**
 	 * Ingress point that starts a setlist migration.
@@ -38,6 +47,12 @@ class SetlistController(
 			.header(HttpHeaders.SET_COOKIE, cookie.toString())
 			.location(URI.create("/oauth2/authorization/spotify"))
 			.build()
+	}
+
+	@GetMapping("/callback")
+	fun getCallback(): ResponseEntity<Dummy> {
+		LOG.info("################## Get SetlistCallback #################")
+		return ResponseEntity.ok(Dummy("SetlistCallback Called Fine"))
 	}
 
 	@ExceptionHandler(IllegalArgumentException::class)
