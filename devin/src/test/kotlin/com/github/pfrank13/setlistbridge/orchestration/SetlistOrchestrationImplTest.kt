@@ -19,6 +19,7 @@ import com.github.pfrank13.setlistbridge.spotify.SnapshotResponse
 import com.github.pfrank13.setlistbridge.spotify.SpotifyClient
 import com.github.pfrank13.setlistbridge.spotify.TrackItem
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -56,7 +57,7 @@ class SetlistOrchestrationImplTest {
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))).thenReturn(SNAPSHOT)
 
-		val result = orchestration.transferSetlist(SETLIST_ID)
+		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
 
 		assertThat(result.externalPlaylistId).isEqualTo(PLAYLIST_ID)
 		assertThat(result.name).isEqualTo(PLAYLIST_NAME)
@@ -73,7 +74,7 @@ class SetlistOrchestrationImplTest {
 		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_ONE)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
 
-		orchestration.transferSetlist(SETLIST_ID)
+		orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
 
 		verify(spotifyClient).searchForItems(
 			eq(SONG_ONE_QUERY),
@@ -93,7 +94,7 @@ class SetlistOrchestrationImplTest {
 		whenever(searchFor(SONG_TWO_QUERY)).thenReturn(SEARCH_RESPONSE_TWO)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))).thenReturn(SNAPSHOT)
 
-		val result = orchestration.transferSetlist(SETLIST_ID)
+		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
 
 		assertThat(result.songs).containsExactly(SONG_TWO_RESULT)
 		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))
@@ -106,12 +107,34 @@ class SetlistOrchestrationImplTest {
 		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
 		whenever(searchFor(MISSING_SONG_QUERY)).thenReturn(EMPTY_SEARCH_RESPONSE)
 
-		val result = orchestration.transferSetlist(SETLIST_ID)
+		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
 
 		assertThat(result.externalPlaylistId).isEqualTo(PLAYLIST_ID)
 		assertThat(result.songs).isEmpty()
 		verify(spotifyClient).createPlaylist(eq(CREATE_PLAYLIST_REQUEST))
 		verify(spotifyClient, never()).addItemsToPlaylist(any(), any())
+	}
+
+	@Test
+	fun `transferSetlist throws when no pending migration exists for the setlistId`() {
+		assertThatThrownBy { orchestration.transferSetlist("unknown-key") }
+			.isInstanceOf(IllegalArgumentException::class.java)
+
+		verify(spotifyClient, never()).createPlaylist(any())
+	}
+
+	@Test
+	fun `transferSetlist consumes the pending migration so it cannot be replayed`() {
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(SETLIST_ONE_SONG)
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_ONE)
+		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
+
+		val key = orchestration.startSetlistMigration(SETLIST_ID)
+		orchestration.transferSetlist(key)
+
+		assertThatThrownBy { orchestration.transferSetlist(key) }
+			.isInstanceOf(IllegalArgumentException::class.java)
 	}
 
 	@Test

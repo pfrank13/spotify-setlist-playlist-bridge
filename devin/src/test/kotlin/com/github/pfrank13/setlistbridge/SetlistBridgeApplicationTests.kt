@@ -84,7 +84,7 @@ class SetlistBridgeApplicationTests {
 
 		assertThat(response.status()).isEqualTo(302)
 		assertThat(response.headers()["location"]).isEqualTo("/oauth2/authorization/spotify")
-		assertThat(response.headers()["set-cookie"]).contains("externalSetlistId=")
+		assertThat(response.headers()["set-cookie"]).contains("setlistId=")
 	}
 
 	@Test

@@ -6,13 +6,14 @@ package com.github.pfrank13.setlistbridge.orchestration
 interface SetlistOrchestration {
 
 	/**
-	 * Fetches the setlist with the given setlist.fm id, creates a Spotify playlist
-	 * and adds the best match for each song to it.
+	 * Resumes a migration previously registered via [startSetlistMigration], creates a
+	 * Spotify playlist and adds the best match for each song to it.
 	 *
-	 * @param setlistFmId the setlist.fm id of the setlist to transfer
+	 * @param setlistId the surrogate key returned by [startSetlistMigration] (read from the cookie)
 	 * @return a [SetlistPlaylist] describing the created playlist and the songs added to it
+	 * @throws IllegalArgumentException if no pending migration is registered under [setlistId]
 	 */
-	fun transferSetlist(setlistFmId: String): SetlistPlaylist
+	fun transferSetlist(setlistId: String): SetlistPlaylist
 
 	/**
 	 * Stores the given setlist.fm id under a freshly generated key so the migration

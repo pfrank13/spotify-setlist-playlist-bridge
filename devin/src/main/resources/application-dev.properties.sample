@@ -1,0 +1,10 @@
+# Sample configuration for the `dev` profile (activated by `./gradlew bootRun`).
+# Copy to application-dev.properties (gitignored) and fill in real values so the app
+# runs against the real setlist.fm and Spotify APIs instead of WireMock.
+
+# --- setlist.fm API client ---
+setlistfm.base-url=https://api.setlist.fm/rest
+setlistfm.api-key=your-setlist-fm-api-key
+
+# --- Spotify OAuth2 client ---
+spring.security.oauth2.client.registration.spotify.client-id=your-spotify-client-id

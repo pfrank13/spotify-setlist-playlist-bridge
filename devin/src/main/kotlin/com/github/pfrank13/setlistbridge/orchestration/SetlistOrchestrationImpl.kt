@@ -28,7 +28,10 @@ class SetlistOrchestrationImpl(
 		return key
 	}
 
-	override fun transferSetlist(setlistFmId: String): SetlistPlaylist {
+	override fun transferSetlist(setlistId: String): SetlistPlaylist {
+		val setlistFmId = pendingMigrations.remove(setlistId)
+			?: throw IllegalArgumentException("No pending migration for setlistId '$setlistId'")
+
 		// TODO: should getSetListById return a nullable Setlist so a missing setlist can be handled explicitly?
 		val setlist = setlistFmClient.getSetListById(setlistFmId)
 		val playlist = spotifyClient.createPlaylist(CreatePlaylistRequest(playlistName(setlist)))
