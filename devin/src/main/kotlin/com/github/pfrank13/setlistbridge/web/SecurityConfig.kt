@@ -14,6 +14,9 @@ class SecurityConfig {
 		http {
 			authorizeHttpRequests {
 				authorize("/api/setlist/**", permitAll)
+				authorize("/callback", permitAll)
+				authorize("/favicon.ico", permitAll)
+				authorize("/error", permitAll)
 				authorize(anyRequest, authenticated)
 			}
 			oauth2Client { }
