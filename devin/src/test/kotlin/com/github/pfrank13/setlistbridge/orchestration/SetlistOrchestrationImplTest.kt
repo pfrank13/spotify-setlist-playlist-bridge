@@ -40,12 +40,14 @@ class SetlistOrchestrationImplTest {
 	private lateinit var setlistFmClient: SetlistFmClient
 	private lateinit var spotifyClient: SpotifyClient
 	private lateinit var orchestration: SetlistOrchestrationImpl
+	private lateinit var setlistId: String
 
 	@BeforeEach
 	fun setUp() {
 		setlistFmClient = mock()
 		spotifyClient = mock()
 		orchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient)
+		setlistId = orchestration.startSetlistMigration(SETLIST_ID)
 	}
 
 	@Test
@@ -57,7 +59,7 @@ class SetlistOrchestrationImplTest {
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))).thenReturn(SNAPSHOT)
 
-		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
+		val result = orchestration.transferSetlist(setlistId)
 
 		assertThat(result.externalPlaylistId).isEqualTo(PLAYLIST_ID)
 		assertThat(result.name).isEqualTo(PLAYLIST_NAME)
@@ -74,7 +76,7 @@ class SetlistOrchestrationImplTest {
 		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_ONE)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
 
-		orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
+		orchestration.transferSetlist(setlistId)
 
 		verify(spotifyClient).searchForItems(
 			eq(SONG_ONE_QUERY),
@@ -94,7 +96,7 @@ class SetlistOrchestrationImplTest {
 		whenever(searchFor(SONG_TWO_QUERY)).thenReturn(SEARCH_RESPONSE_TWO)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))).thenReturn(SNAPSHOT)
 
-		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
+		val result = orchestration.transferSetlist(setlistId)
 
 		assertThat(result.songs).containsExactly(SONG_TWO_RESULT)
 		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_TWO_REQUEST))
@@ -107,7 +109,7 @@ class SetlistOrchestrationImplTest {
 		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
 		whenever(searchFor(MISSING_SONG_QUERY)).thenReturn(EMPTY_SEARCH_RESPONSE)
 
-		val result = orchestration.transferSetlist(orchestration.startSetlistMigration(SETLIST_ID))
+		val result = orchestration.transferSetlist(setlistId)
 
 		assertThat(result.externalPlaylistId).isEqualTo(PLAYLIST_ID)
 		assertThat(result.songs).isEmpty()
@@ -130,17 +132,17 @@ class SetlistOrchestrationImplTest {
 		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_ONE)
 		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
 
-		val key = orchestration.startSetlistMigration(SETLIST_ID)
-		orchestration.transferSetlist(key)
+		orchestration.transferSetlist(setlistId)
 
-		assertThatThrownBy { orchestration.transferSetlist(key) }
+		assertThatThrownBy { orchestration.transferSetlist(setlistId) }
 			.isInstanceOf(IllegalArgumentException::class.java)
 	}
 
 	@Test
 	fun `startSetlistMigration returns a fresh key for each call`() {
-		val keyOne = orchestration.startSetlistMigration("setlist-1")
-		val keyTwo = orchestration.startSetlistMigration("setlist-1")
+		val freshOrchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient)
+		val keyOne = freshOrchestration.startSetlistMigration("setlist-1")
+		val keyTwo = freshOrchestration.startSetlistMigration("setlist-1")
 
 		assertThat(keyOne).isNotBlank()
 		assertThat(keyTwo).isNotBlank()

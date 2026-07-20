@@ -2,9 +2,21 @@
 # Copy to application-dev.properties (gitignored) and fill in real values so the app
 # runs against the real setlist.fm and Spotify APIs instead of WireMock.
 
-# --- setlist.fm API client ---
+spring.application.name=setlist-bridge
+
+# setlist.fm API client
 setlistfm.base-url=https://api.setlist.fm/rest
 setlistfm.api-key=your-setlist-fm-api-key
 
-# --- Spotify OAuth2 client ---
+# Spotify Web API
+spotify.base-url=https://api.spotify.com
+
+# Spotify OAuth2 client registration (Authorization Code + PKCE)
 spring.security.oauth2.client.registration.spotify.client-id=your-spotify-client-id
+spring.security.oauth2.client.registration.spotify.client-authentication-method=none
+spring.security.oauth2.client.registration.spotify.authorization-grant-type=authorization_code
+spring.security.oauth2.client.registration.spotify.scope=playlist-modify-public,playlist-modify-private
+spring.security.oauth2.client.registration.spotify.redirect-uri=http://localhost:8080/callback
+
+spring.security.oauth2.client.provider.spotify.authorization-uri=https://accounts.spotify.com/authorize
+spring.security.oauth2.client.provider.spotify.token-uri=https://accounts.spotify.com/api/token
