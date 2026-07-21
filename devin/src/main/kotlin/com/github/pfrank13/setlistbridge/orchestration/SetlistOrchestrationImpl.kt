@@ -39,7 +39,7 @@ class SetlistOrchestrationImpl(
 		val artistName = setlist.artist.name
 		val songs = LinkedHashSet<SetlistSong>()
 
-		setlist.set.flatMap { it.song }.forEach { song ->
+		setlist.sets.set.flatMap { it.song }.forEach { song ->
 			val response = spotifyClient.searchForItems(
 				"$artistName ${song.name}",
 				setOf(SearchItemType.TRACK),
