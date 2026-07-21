@@ -39,43 +39,56 @@ class SetlistOrchestrationImpl(
 		val artistName = setlist.artist.name
 		val songs = LinkedHashSet<SetlistSong>()
 
-		setlist.sets.set.flatMap { it.song }.forEach { song ->
-			val response = spotifyClient.searchForItems(
-				"$artistName ${song.name}",
-				setOf(SearchItemType.TRACK),
-				null,
-				1,
-				0,
-				null,
-			)
+		for((_, _, song) in setlist.sets.set) {
+			log.info("${song.size} Songs in set $song")
+			for((name, _, _, _, cover) in song) {
+				var artistToSearch = artistName
+				if(cover != null) {
+					artistToSearch = cover.name
+				}
+				val q = "$name $artistToSearch"
+				log.info("Searching for: $q")
+				val response = spotifyClient.searchForItems(
+					q,
+					setOf(SearchItemType.TRACK),
+					null,
+					1,
+					0,
+					null,
+				)
 
-			val track = response.tracks?.items?.firstOrNull()
-			if (track == null) {
-				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, artistName)
-				return@forEach
-			}
+				val track = response.tracks?.items?.firstOrNull()
+				if (track == null) {
+					log.warn("Could not find song '{}' by '{}' in Spotify", name, artistName)
+					continue
+				} else if(!track.name.equals(name, ignoreCase = true)) {
+					log.warn("Skipping the adding of found song with name '{}' because it doesn't match the input song name '{}'", track.name, name)
+					continue
+				}
 
-			// TODO: adds a single track per request; could be optimized to batch all uris into one addItemsToPlaylist call.
-			val snapshot = spotifyClient.addItemsToPlaylist(
-				playlist.id,
-				AddItemsToPlaylistRequest(listOf(track.uri.toString())),
-			)
-			log.info(
-				"Added song '{}' to playlist '{}' (new snapshot id '{}')",
-				track.name,
-				playlist.id,
-				snapshot.snapshotId,
-			)
-
-			val trackArtist = track.artists.firstOrNull()
-			songs.add(
-				SetlistSong(
-					track.id,
-					Artist(trackArtist?.id ?: "", trackArtist?.name ?: artistName),
+				// TODO: adds a single track per request; could be optimized to batch all uris into one addItemsToPlaylist call.
+				log.info("Searched for '{}', Adding song '{}' with URI '{}'", q, track.name, track.uri.toString())
+				val snapshot = spotifyClient.addItemsToPlaylist(
+					playlist.id,
+					AddItemsToPlaylistRequest(listOf(track.uri.toString())),
+				)
+				log.info(
+					"Added song '{}' to playlist '{}' (new snapshot id '{}')",
 					track.name,
-					track.durationMs.milliseconds,
-				),
-			)
+					playlist.id,
+					snapshot.snapshotId,
+				)
+
+				val trackArtist = track.artists.firstOrNull()
+				songs.add(
+					SetlistSong(
+						track.id,
+						Artist(trackArtist?.id ?: "", trackArtist?.name ?: artistName),
+						track.name,
+						track.durationMs.milliseconds,
+					),
+				)
+			}
 		}
 
 		return SetlistPlaylist(playlist.id, playlist.name, songs)

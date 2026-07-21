@@ -94,7 +94,7 @@ class RestClientSetlistFmClientTest {
 			tour = Tour(name = "North American Tour 1964"),
 			sets = Sets(
 				set = listOf(
-					Set(
+					SetFm(
 						name = null,
 						encore = null,
 						song = listOf(
@@ -114,7 +114,7 @@ class RestClientSetlistFmClientTest {
 							Song(name = "You Can't Do That", info = null, tape = null, with = null, cover = null),
 						),
 					),
-					Set(
+					SetFm(
 						name = null,
 						encore = 1,
 						song = listOf(

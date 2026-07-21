@@ -1,5 +1,6 @@
 package com.github.pfrank13.setlistbridge.spotify
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
@@ -8,7 +9,9 @@ import org.springframework.web.client.RestClientException
 class RestClientSpotifyClient(
 	private val spotifyRestClient: RestClient,
 ) : SpotifyClient {
-
+	companion object {
+		private val log = LoggerFactory.getLogger(RestClientSpotifyClient::class.java)
+	}
 	override fun createPlaylist(request: CreatePlaylistRequest): Playlist {
 		try {
 			return spotifyRestClient.post()
@@ -23,6 +26,7 @@ class RestClientSpotifyClient(
 	}
 
 	override fun addItemsToPlaylist(playlistId: String, request: AddItemsToPlaylistRequest): SnapshotResponse {
+		log.info("Client is adding uris: ${request.uris}")
 		try {
 			return spotifyRestClient.post()
 				.uri(SpotifyClient.ADD_ITEMS_TO_PLAYLIST_URI, playlistId)

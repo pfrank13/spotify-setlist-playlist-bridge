@@ -21,7 +21,7 @@ data class Setlist(
 )
 
 data class Sets(
-	val set: List<Set>,
+	val set: List<SetFm>,
 )
 
 data class Artist(
@@ -62,7 +62,7 @@ data class Tour(
 	val name: String,
 )
 
-data class Set(
+data class SetFm(
 	val name: String?,
 	val encore: Int?,
 	val song: List<Song>,
