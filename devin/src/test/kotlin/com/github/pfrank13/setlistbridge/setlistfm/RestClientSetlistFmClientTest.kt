@@ -92,32 +92,34 @@ class RestClientSetlistFmClientTest {
 				),
 			),
 			tour = Tour(name = "North American Tour 1964"),
-			set = listOf(
-				Set(
-					name = null,
-					encore = null,
-					song = listOf(
-						Song(
-							name = "Twist and Shout",
-							info = null,
-							tape = false,
-							with = null,
-							cover = Artist(
-								mbid = "f1eb7e69-2c1e-4b39-8de3-7c1a4f6f1234",
-								name = "The Top Notes",
-								sortName = "Top Notes, The",
-								disambiguation = "",
-								url = "https://www.setlist.fm/setlists/the-top-notes-13d6e7f1.html",
+			sets = Sets(
+				set = listOf(
+					Set(
+						name = null,
+						encore = null,
+						song = listOf(
+							Song(
+								name = "Twist and Shout",
+								info = null,
+								tape = true,
+								with = null,
+								cover = Artist(
+									mbid = "f1eb7e69-2c1e-4b39-8de3-7c1a4f6f1234",
+									name = "The Top Notes",
+									sortName = "Top Notes, The",
+									disambiguation = "",
+									url = "https://www.setlist.fm/setlists/the-top-notes-13d6e7f1.html",
+								),
 							),
+							Song(name = "You Can't Do That", info = null, tape = null, with = null, cover = null),
 						),
-						Song(name = "You Can't Do That", info = null, tape = false, with = null, cover = null),
 					),
-				),
-				Set(
-					name = null,
-					encore = 1,
-					song = listOf(
-						Song(name = "Long Tall Sally", info = "Last song of the night", tape = false, with = null, cover = null),
+					Set(
+						name = null,
+						encore = 1,
+						song = listOf(
+							Song(name = "Long Tall Sally", info = "Last song of the night", tape = null, with = null, cover = null),
+						),
 					),
 				),
 			),

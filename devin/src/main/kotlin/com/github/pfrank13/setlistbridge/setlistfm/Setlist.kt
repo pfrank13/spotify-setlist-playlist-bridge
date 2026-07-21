@@ -3,7 +3,8 @@ package com.github.pfrank13.setlistbridge.setlistfm
 /**
  * Response model for the setlist.fm `setlist` data type.
  *
- * Modelled after the documented example, treating fields shown there as required.
+ * Modelled after the shape the API returns in practice; fields that are absent for
+ * some setlists are nullable.
  * See https://api.setlist.fm/docs/1.0/json_Setlist.html
  */
 data class Setlist(
@@ -13,10 +14,14 @@ data class Setlist(
 	val lastUpdated: String,
 	val artist: Artist,
 	val venue: Venue,
-	val tour: Tour,
-	val set: List<Set>,
-	val info: String,
+	val tour: Tour?,
+	val sets: Sets,
+	val info: String?,
 	val url: String,
+)
+
+data class Sets(
+	val set: List<Set>,
 )
 
 data class Artist(
@@ -66,7 +71,7 @@ data class Set(
 data class Song(
 	val name: String,
 	val info: String?,
-	val tape: Boolean,
+	val tape: Boolean?,
 	val with: Artist?,
 	val cover: Artist?,
 )

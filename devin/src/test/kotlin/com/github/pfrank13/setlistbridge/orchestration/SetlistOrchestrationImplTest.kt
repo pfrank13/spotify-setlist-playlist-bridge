@@ -5,6 +5,7 @@ import com.github.pfrank13.setlistbridge.setlistfm.Coords
 import com.github.pfrank13.setlistbridge.setlistfm.Country
 import com.github.pfrank13.setlistbridge.setlistfm.Setlist
 import com.github.pfrank13.setlistbridge.setlistfm.SetlistFmClient
+import com.github.pfrank13.setlistbridge.setlistfm.Sets
 import com.github.pfrank13.setlistbridge.setlistfm.Song
 import com.github.pfrank13.setlistbridge.setlistfm.Tour
 import com.github.pfrank13.setlistbridge.setlistfm.Venue
@@ -221,7 +222,7 @@ class SetlistOrchestrationImplTest {
 				City("city-id", "City", "State", "ST", Coords(null, null), Country("US", "United States")),
 			),
 			Tour("The Tour"),
-			listOf(SetlistFmSet(null, null, songs)),
+			Sets(listOf(SetlistFmSet(null, null, songs))),
 			"",
 			"https://www.setlist.fm/setlist",
 		)
