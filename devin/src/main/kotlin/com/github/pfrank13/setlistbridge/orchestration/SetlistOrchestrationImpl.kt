@@ -36,12 +36,14 @@ class SetlistOrchestrationImpl(
 		val setlist = setlistFmClient.getSetListById(setlistFmId)
 		val playlist = spotifyClient.createPlaylist(CreatePlaylistRequest(playlistName(setlist)))
 
-		val artistName = setlist.artist.name
 		val songs = LinkedHashSet<SetlistSong>()
 
 		setlist.sets.set.flatMap { it.song }.forEach { song ->
+			val searchArtist = song.cover?.name ?: setlist.artist.name
+			val query = "${song.name} $searchArtist"
+			log.info("Searching Spotify for song '{}' by '{}' with q '{}'", song.name, searchArtist, query)
 			val response = spotifyClient.searchForItems(
-				"$artistName ${song.name}",
+				query,
 				setOf(SearchItemType.TRACK),
 				null,
 				1,
@@ -51,7 +53,17 @@ class SetlistOrchestrationImpl(
 
 			val track = response.tracks?.items?.firstOrNull()
 			if (track == null) {
-				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, artistName)
+				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, searchArtist)
+				return@forEach
+			}
+
+			if (!track.name.equals(song.name, ignoreCase = true)) {
+				log.warn(
+					"Skipping song '{}' by '{}': best match track '{}' does not match the song title",
+					song.name,
+					searchArtist,
+					track.name,
+				)
 				return@forEach
 			}
 
@@ -71,7 +83,7 @@ class SetlistOrchestrationImpl(
 			songs.add(
 				SetlistSong(
 					track.id,
-					Artist(trackArtist?.id ?: "", trackArtist?.name ?: artistName),
+					Artist(trackArtist?.id ?: "", trackArtist?.name ?: searchArtist),
 					track.name,
 					track.durationMs.milliseconds,
 				),

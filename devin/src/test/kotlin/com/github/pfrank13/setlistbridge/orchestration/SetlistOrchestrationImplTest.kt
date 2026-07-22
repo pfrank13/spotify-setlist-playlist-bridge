@@ -71,7 +71,7 @@ class SetlistOrchestrationImplTest {
 	}
 
 	@Test
-	fun `transferSetlist uses the performing artist and the song name as the search query`() {
+	fun `transferSetlist uses the song name and then the performing artist as the search query`() {
 		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(SETLIST_ONE_SONG)
 		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
 		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_ONE)
@@ -87,6 +87,52 @@ class SetlistOrchestrationImplTest {
 			eq(0),
 			isNull(),
 		)
+	}
+
+	@Test
+	fun `transferSetlist searches for the cover artist when a song is a cover`() {
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(SETLIST_COVER_SONG)
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor(COVER_SONG_QUERY)).thenReturn(SEARCH_RESPONSE_COVER)
+		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_COVER_REQUEST))).thenReturn(SNAPSHOT)
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).containsExactly(COVER_SONG_RESULT)
+		verify(spotifyClient).searchForItems(
+			eq(COVER_SONG_QUERY),
+			eq(setOf(SearchItemType.TRACK)),
+			isNull(),
+			eq(1),
+			eq(0),
+			isNull(),
+		)
+	}
+
+	@Test
+	fun `transferSetlist skips tracks whose title does not match the setlist song`() {
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(SETLIST_ONE_SONG)
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(SEARCH_RESPONSE_MISMATCH)
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).isEmpty()
+		verify(spotifyClient, never()).addItemsToPlaylist(any(), any())
+	}
+
+	@Test
+	fun `transferSetlist matches song titles case-insensitively`() {
+		val song = song("SONG one")
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(setlist(listOf(song)))
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor("SONG one $ARTIST_NAME")).thenReturn(SEARCH_RESPONSE_ONE)
+		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).containsExactly(SONG_ONE_RESULT)
+		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))
 	}
 
 	@Test
@@ -168,18 +214,22 @@ class SetlistOrchestrationImplTest {
 		const val EVENT_DATE = "10-07-2026"
 		const val PLAYLIST_NAME = "$ARTIST_NAME at $VENUE_NAME - $EVENT_DATE"
 
-		const val SONG_ONE_QUERY = "$ARTIST_NAME Song One"
-		const val SONG_TWO_QUERY = "$ARTIST_NAME Song Two"
-		const val MISSING_SONG_QUERY = "$ARTIST_NAME Missing Song"
+		const val COVER_ARTIST_NAME = "The Original Artist"
+		const val SONG_ONE_QUERY = "Song One $ARTIST_NAME"
+		const val SONG_TWO_QUERY = "Song Two $ARTIST_NAME"
+		const val MISSING_SONG_QUERY = "Missing Song $ARTIST_NAME"
+		const val COVER_SONG_QUERY = "Cover Song $COVER_ARTIST_NAME"
 
 		val SONG_ONE = song("Song One")
 		val SONG_TWO = song("Song Two")
 		val MISSING_SONG = song("Missing Song")
+		val COVER_SONG = Song("Cover Song", null, false, null, coverArtist(COVER_ARTIST_NAME))
 
 		val SETLIST_ONE_SONG = setlist(listOf(SONG_ONE))
 		val SETLIST_TWO_SONGS = setlist(listOf(SONG_ONE, SONG_TWO))
 		val SETLIST_MISSING_AND_FOUND = setlist(listOf(MISSING_SONG, SONG_TWO))
 		val SETLIST_MISSING_ONLY = setlist(listOf(MISSING_SONG))
+		val SETLIST_COVER_SONG = setlist(listOf(COVER_SONG))
 
 		val CREATE_PLAYLIST_REQUEST = CreatePlaylistRequest(PLAYLIST_NAME)
 		val PLAYLIST = Playlist(
@@ -196,18 +246,27 @@ class SetlistOrchestrationImplTest {
 
 		val TRACK_ONE = track("track-1", "Song One", "Track Artist 1", 210_000)
 		val TRACK_TWO = track("track-2", "Song Two", "Track Artist 2", 180_000)
+		val COVER_TRACK = track("track-cover", "Cover Song", "Track Artist 3", 200_000)
+		val MISMATCH_TRACK = track("track-x", "A Completely Different Track", "Track Artist 4", 100_000)
 
 		val SEARCH_RESPONSE_ONE = searchResponse(TRACK_ONE)
 		val SEARCH_RESPONSE_TWO = searchResponse(TRACK_TWO)
+		val SEARCH_RESPONSE_COVER = searchResponse(COVER_TRACK)
+		val SEARCH_RESPONSE_MISMATCH = searchResponse(MISMATCH_TRACK)
 		val EMPTY_SEARCH_RESPONSE = searchResponse()
 
 		val ADD_TRACK_ONE_REQUEST = AddItemsToPlaylistRequest(listOf("spotify:track:track-1"))
 		val ADD_TRACK_TWO_REQUEST = AddItemsToPlaylistRequest(listOf("spotify:track:track-2"))
+		val ADD_TRACK_COVER_REQUEST = AddItemsToPlaylistRequest(listOf("spotify:track:track-cover"))
 
 		val SONG_ONE_RESULT = SetlistSong("track-1", Artist("artist-track-1", "Track Artist 1"), "Song One", 210_000.milliseconds)
 		val SONG_TWO_RESULT = SetlistSong("track-2", Artist("artist-track-2", "Track Artist 2"), "Song Two", 180_000.milliseconds)
+		val COVER_SONG_RESULT = SetlistSong("track-cover", Artist("artist-track-cover", "Track Artist 3"), "Cover Song", 200_000.milliseconds)
 
 		private fun song(name: String): Song = Song(name, null, false, null, null)
+
+		private fun coverArtist(name: String): SetlistFmArtist =
+			SetlistFmArtist("mbid-cover", name, name, "", "https://www.setlist.fm/artist-cover")
 
 		private fun setlist(songs: List<Song>): Setlist = Setlist(
 			SETLIST_ID,
