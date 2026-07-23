@@ -8,3 +8,8 @@ spring.application.name=setlist-bridge
 setlistfm.base-url=https://api.setlist.fm/rest
 # API key from https://api.setlist.fm/docs/1.0/index.html (sent as the x-api-key header).
 setlistfm.api-key=your-setlist-fm-api-key
+
+# --- Track matching ---
+# Minimum fuzzy similarity (0.0-1.0) between a setlist song title and a Spotify
+# track title for the track to be accepted as a match.
+matching.ratio-threshold=0.90
