@@ -47,7 +47,7 @@ class SetlistOrchestrationImplTest {
 	fun setUp() {
 		setlistFmClient = mock()
 		spotifyClient = mock()
-		orchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient)
+		orchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient, MatchingProperties(RATIO_THRESHOLD))
 		setlistId = orchestration.startSetlistMigration(SETLIST_ID)
 	}
 
@@ -136,6 +136,38 @@ class SetlistOrchestrationImplTest {
 	}
 
 	@Test
+	fun `transferSetlist accepts tracks whose title is within the fuzzy match threshold`() {
+		val song = song("Comfortably Numb")
+		val nearMissTrack = track("track-numb", "Comfortably Num", "Track Artist", 300_000)
+		val addRequest = AddItemsToPlaylistRequest(listOf("spotify:track:track-numb"))
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(setlist(listOf(song)))
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor("Comfortably Numb $ARTIST_NAME")).thenReturn(searchResponse(nearMissTrack))
+		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(addRequest))).thenReturn(SNAPSHOT)
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).containsExactly(
+			SetlistSong("track-numb", Artist("artist-track-numb", "Track Artist"), "Comfortably Num", 300_000.milliseconds),
+		)
+		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(addRequest))
+	}
+
+	@Test
+	fun `transferSetlist skips tracks whose title falls below the fuzzy match threshold`() {
+		val song = song("Purple Rain")
+		val belowThresholdTrack = track("track-rain", "Purpel Rain", "Track Artist", 300_000)
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(setlist(listOf(song)))
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor("Purple Rain $ARTIST_NAME")).thenReturn(searchResponse(belowThresholdTrack))
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).isEmpty()
+		verify(spotifyClient, never()).addItemsToPlaylist(any(), any())
+	}
+
+	@Test
 	fun `transferSetlist skips songs that cannot be found in Spotify`() {
 		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(SETLIST_MISSING_AND_FOUND)
 		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
@@ -187,7 +219,7 @@ class SetlistOrchestrationImplTest {
 
 	@Test
 	fun `startSetlistMigration returns a fresh key for each call`() {
-		val freshOrchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient)
+		val freshOrchestration = SetlistOrchestrationImpl(setlistFmClient, spotifyClient, MatchingProperties(RATIO_THRESHOLD))
 		val keyOne = freshOrchestration.startSetlistMigration("setlist-1")
 		val keyTwo = freshOrchestration.startSetlistMigration("setlist-1")
 
@@ -207,6 +239,7 @@ class SetlistOrchestrationImplTest {
 		)
 
 	private companion object {
+		const val RATIO_THRESHOLD = 0.90
 		const val SETLIST_ID = "setlist-123"
 		const val PLAYLIST_ID = "playlist-abc"
 		const val ARTIST_NAME = "The Band"

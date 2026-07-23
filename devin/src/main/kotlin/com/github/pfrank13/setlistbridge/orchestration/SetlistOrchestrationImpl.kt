@@ -1,5 +1,6 @@
 package com.github.pfrank13.setlistbridge.orchestration
 
+import ca.solostudios.fuzzykt.FuzzyKt
 import com.github.pfrank13.setlistbridge.setlistfm.Setlist
 import com.github.pfrank13.setlistbridge.setlistfm.SetlistFmClient
 import com.github.pfrank13.setlistbridge.spotify.AddItemsToPlaylistRequest
@@ -16,6 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class SetlistOrchestrationImpl(
 	private val setlistFmClient: SetlistFmClient,
 	private val spotifyClient: SpotifyClient,
+	private val matchingProperties: MatchingProperties,
 ) : SetlistOrchestration {
 
 	private val log = LoggerFactory.getLogger(SetlistOrchestrationImpl::class.java)
@@ -57,12 +59,15 @@ class SetlistOrchestrationImpl(
 				return@forEach
 			}
 
-			if (!track.name.equals(song.name, ignoreCase = true)) {
+			val ratio = FuzzyKt.ratio(song.name.lowercase(), track.name.lowercase())
+			if (ratio < matchingProperties.ratioThreshold) {
 				log.warn(
-					"Skipping song '{}' by '{}': best match track '{}' does not match the song title",
+					"Skipping song '{}' by '{}': best match track '{}' scored {} below threshold {}",
 					song.name,
 					searchArtist,
 					track.name,
+					ratio,
+					matchingProperties.ratioThreshold,
 				)
 				return@forEach
 			}
