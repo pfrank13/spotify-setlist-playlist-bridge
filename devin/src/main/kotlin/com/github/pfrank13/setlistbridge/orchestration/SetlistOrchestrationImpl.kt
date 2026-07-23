@@ -48,25 +48,35 @@ class SetlistOrchestrationImpl(
 				query,
 				setOf(SearchItemType.TRACK),
 				null,
-				1,
+				matchingProperties.searchLimit,
 				0,
 				null,
 			)
 
-			val track = response.tracks?.items?.firstOrNull()
-			if (track == null) {
+			val tracks = response.tracks?.items.orEmpty()
+			if (tracks.isEmpty()) {
 				log.warn("Could not find song '{}' by '{}' in Spotify", song.name, searchArtist)
 				return@forEach
 			}
 
-			val ratio = FuzzyKt.ratio(song.name.lowercase(), track.name.lowercase())
-			if (ratio < matchingProperties.ratioThreshold) {
+			val songName = song.name.lowercase()
+			val scoredTracks = tracks.map { it to FuzzyKt.ratio(songName, it.name.lowercase()) }
+			log.info(
+				"Spotify returned {} track(s) for '{}': {}",
+				scoredTracks.size,
+				query,
+				scoredTracks.joinToString(", ") { (candidate, ratio) -> "'${candidate.name}' ($ratio)" },
+			)
+
+			val track = scoredTracks.firstOrNull { (_, ratio) -> ratio >= matchingProperties.ratioThreshold }?.first
+			if (track == null) {
+				val bestMatch = scoredTracks.maxByOrNull { (_, ratio) -> ratio }
 				log.warn(
 					"Skipping song '{}' by '{}': best match track '{}' scored {} below threshold {}",
 					song.name,
 					searchArtist,
-					track.name,
-					ratio,
+					bestMatch?.first?.name,
+					bestMatch?.second,
 					matchingProperties.ratioThreshold,
 				)
 				return@forEach

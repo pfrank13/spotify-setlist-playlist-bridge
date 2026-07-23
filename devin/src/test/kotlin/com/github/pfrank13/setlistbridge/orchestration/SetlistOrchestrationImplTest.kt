@@ -83,7 +83,7 @@ class SetlistOrchestrationImplTest {
 			eq(SONG_ONE_QUERY),
 			eq(setOf(SearchItemType.TRACK)),
 			isNull(),
-			eq(1),
+			eq(SEARCH_LIMIT),
 			eq(0),
 			isNull(),
 		)
@@ -103,7 +103,7 @@ class SetlistOrchestrationImplTest {
 			eq(COVER_SONG_QUERY),
 			eq(setOf(SearchItemType.TRACK)),
 			isNull(),
-			eq(1),
+			eq(SEARCH_LIMIT),
 			eq(0),
 			isNull(),
 		)
@@ -151,6 +151,36 @@ class SetlistOrchestrationImplTest {
 			SetlistSong("track-numb", Artist("artist-track-numb", "Track Artist"), "Comfortably Num", 300_000.milliseconds),
 		)
 		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(addRequest))
+	}
+
+	@Test
+	fun `transferSetlist iterates past non-matching results and adds the first track that matches`() {
+		val song = song("Song One")
+		val mismatch = track("track-x", "A Completely Different Track", "Track Artist 4", 100_000)
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(setlist(listOf(song)))
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor(SONG_ONE_QUERY)).thenReturn(searchResponse(mismatch, TRACK_ONE))
+		whenever(spotifyClient.addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))).thenReturn(SNAPSHOT)
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).containsExactly(SONG_ONE_RESULT)
+		verify(spotifyClient).addItemsToPlaylist(eq(PLAYLIST_ID), eq(ADD_TRACK_ONE_REQUEST))
+	}
+
+	@Test
+	fun `transferSetlist skips a song when none of the returned tracks match`() {
+		val song = song("Purple Rain")
+		val missOne = track("track-rain", "Purpel Rain", "Track Artist", 300_000)
+		val missTwo = track("track-other", "A Completely Different Track", "Track Artist", 200_000)
+		whenever(setlistFmClient.getSetListById(eq(SETLIST_ID))).thenReturn(setlist(listOf(song)))
+		whenever(spotifyClient.createPlaylist(eq(CREATE_PLAYLIST_REQUEST))).thenReturn(PLAYLIST)
+		whenever(searchFor("Purple Rain $ARTIST_NAME")).thenReturn(searchResponse(missOne, missTwo))
+
+		val result = orchestration.transferSetlist(setlistId)
+
+		assertThat(result.songs).isEmpty()
+		verify(spotifyClient, never()).addItemsToPlaylist(any(), any())
 	}
 
 	@Test
@@ -233,13 +263,14 @@ class SetlistOrchestrationImplTest {
 			eq(query),
 			eq(setOf(SearchItemType.TRACK)),
 			isNull(),
-			eq(1),
+			eq(SEARCH_LIMIT),
 			eq(0),
 			isNull(),
 		)
 
 	private companion object {
 		const val RATIO_THRESHOLD = 0.90
+		const val SEARCH_LIMIT = 5
 		const val SETLIST_ID = "setlist-123"
 		const val PLAYLIST_ID = "playlist-abc"
 		const val ARTIST_NAME = "The Band"
