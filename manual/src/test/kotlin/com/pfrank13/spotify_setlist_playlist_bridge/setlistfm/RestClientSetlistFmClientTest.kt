@@ -45,6 +45,25 @@ class RestClientSetlistFmClientTest {
   }
 
   @Test
+  fun getSetlistByIdNotFound() {
+    //GIVEN
+    wireMock
+      .stubFor(
+        get(urlPathEqualTo("/1.0/setlist/$testSetlistId"))
+          .withHeader("x-api-key", WireMock.equalTo(testApiKey))
+          .willReturn(
+            WireMock.notFound()
+          )
+      )
+
+    //WHEN
+    val setList = restClientSetlistFmClient.getSetlistById(testSetlistId)
+
+    //THEN
+    Assertions.assertThat(setList).isNull()
+  }
+
+  @Test
   fun getSetlistById() {
     //GIVEN
     wireMock
