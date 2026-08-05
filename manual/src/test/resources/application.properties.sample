@@ -2,7 +2,7 @@ spring.application.name=spotify-setlist-playlist-bridge
 
 spotify.base.url=https://api.spotify.com
 
-spring.security.oauth2.client.registration.spotify.client-id=${SPOTIFY_CLIENT_ID}
+spring.security.oauth2.client.registration.spotify.client-id=myClientId
 spring.security.oauth2.client.registration.spotify.client-authentication-method=none
 spring.security.oauth2.client.registration.spotify.authorization-grant-type=authorization_code
 spring.security.oauth2.client.registration.spotify.scope=playlist-modify-public,playlist-modify-private
