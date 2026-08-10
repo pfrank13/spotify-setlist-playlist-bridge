@@ -70,12 +70,11 @@ class RestClientSpotifyClientTest {
       WireMock.post(urlEqualTo(RestClientSpotifyClient.CREATE_PLAYLIST_URI))
         .withHeader(HttpHeaders.AUTHORIZATION, WireMock.equalTo("Bearer $bearerToken"))
         .withRequestBody(
-          matchingJsonPath("$.name")
+          matchingJsonPath("$.name", WireMock.equalTo(name))
         )
         .willReturn(
           WireMock.okJson(
-            Companion::class.java.getResourceAsStream("/createPlaylistResponse.json")!!.readAllBytes()
-              .toString(Charsets.UTF_8)
+            resolveResource("/createPlaylistResponse.json")
           )
         )
     )
@@ -99,12 +98,11 @@ class RestClientSpotifyClientTest {
       WireMock.post(urlEqualTo("/v1/playlists/$playlistId/items"))
         .withHeader(HttpHeaders.AUTHORIZATION, WireMock.equalTo("Bearer $bearerToken"))
         .withRequestBody(
-          matchingJsonPath("$.uris[0]")
+          matchingJsonPath("$.uris[0]", WireMock.equalTo(expectedItemUri)),
         )
         .willReturn(
           WireMock.okJson(
-            Companion::class.java.getResourceAsStream("/addItemsToPlaylistResponse.json")!!.readAllBytes()
-              .toString(Charsets.UTF_8)
+            resolveResource("/addItemsToPlaylistResponse.json")
           )
         )
     )
@@ -114,5 +112,47 @@ class RestClientSpotifyClientTest {
 
     //THEN
     Assertions.assertThat(mutatedSnapshotId.snapshotId).isEqualTo(expectedSnapshotId)
+  }
+
+  @Test
+  fun searchForItems() {
+    //GIVEN
+    val q = "Query"
+    val type = ItemType.TRACK
+    val limit = 6
+    val searchForItemsRequest = SearchForItemsRequest(q, type, limit)
+
+    wireMock.stubFor(
+      WireMock.get(WireMock.urlPathEqualTo("/v1/search"))
+        .withQueryParam(RestClientSpotifyClient.Companion.SearchForItemsParams.Q, WireMock.equalTo(q))
+        .withQueryParam(RestClientSpotifyClient.Companion.SearchForItemsParams.TYPE, WireMock.equalTo(type.value))
+        .withQueryParam(RestClientSpotifyClient.Companion.SearchForItemsParams.LIMIT, WireMock.equalTo(limit.toString()))
+        .withHeader(HttpHeaders.AUTHORIZATION, WireMock.equalTo("Bearer $bearerToken"))
+        .willReturn(
+          WireMock.okJson(
+            resolveResource("/searchForItemsResponse.json")
+          )
+        )
+    )
+
+    //WHEN
+    val searchForItemsResponse = restClientSpotifyClient.searchForItems(searchForItemsRequest)
+
+    //THEN
+    Assertions.assertThat(searchForItemsResponse.tracks.items).size().isEqualTo(1)
+    val track = searchForItemsResponse.tracks.items[0]
+    Assertions.assertThat(searchForItemsResponse.tracks.next).isEqualTo(URI("https://api.spotify.com/v1/me/shows?offset=1&limit=1"))
+    Assertions.assertThat(searchForItemsResponse.tracks.previous).isEqualTo(URI("https://api.spotify.com/v1/me/shows?offset=1&limit=1"))
+    Assertions.assertThat(searchForItemsResponse.tracks.offset).isEqualTo(0)
+    Assertions.assertThat(searchForItemsResponse.tracks.total).isEqualTo(searchForItemsResponse.tracks.total)
+
+    Assertions.assertThat(track.id).isEqualTo("myId")
+    Assertions.assertThat(track.name).isEqualTo("My Track Name")
+    Assertions.assertThat(track.uri).isEqualTo(URI("https://api.spotify.com/someUri"))
+  }
+
+  private fun resolveResource(classpathToResource: String): String {
+    return Companion::class.java.getResourceAsStream(classpathToResource)!!.readAllBytes()
+      .toString(Charsets.UTF_8)
   }
 }

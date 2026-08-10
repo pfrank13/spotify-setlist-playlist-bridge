@@ -30,6 +30,41 @@ data class AddItemsToPlaylistResponse(
   val snapshotId: String,
 )
 
+enum class ItemType(val value: String) {
+  ALBUM("album"),
+  ARTIST("artist"),
+  PLAYLIST("playlist"),
+  TRACK("track"),
+  SHOW("show"),
+  EPISODE("episode"),
+  AUDIOBOOK("audiobook"),
+}
+
+data class SearchForItemsRequest(
+  val q: String,
+  val type: ItemType,
+  val limit: Int? = null,
+)
+
+data class TrackItem(
+  val id: String,
+  val name: String,
+  val uri: URI,
+)
+
+data class Tracks(
+  val limit: Int,
+  val offset: Int,
+  val next: URI,
+  val previous: URI,
+  val total: Int,
+  val items: List<TrackItem>,
+)
+
+data class SearchForItemsResponse(
+  val tracks: Tracks,
+)
+
 class SpotifyException : RuntimeException {
   constructor() : super()
   constructor(message: String?) : super(message)
@@ -46,4 +81,5 @@ class SpotifyException : RuntimeException {
 interface SpotifyClient {
   fun createPlaylist(createPlaylistRequest: CreatePlaylistRequest): CreatePlaylistResponse
   fun addItemsToPlaylist(playlistId: String, addItemsToPlaylistRequest: AddItemsToPlaylistRequest): AddItemsToPlaylistResponse
+  fun searchForItems(searchRequest: SearchForItemsRequest): SearchForItemsResponse
 }

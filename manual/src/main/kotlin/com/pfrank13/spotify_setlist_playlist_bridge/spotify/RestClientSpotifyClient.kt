@@ -7,6 +7,12 @@ class RestClientSpotifyClient(private val restClient: RestClient) : SpotifyClien
   companion object {
     const val CREATE_PLAYLIST_URI = "/v1/me/playlists"
     const val ADD_ITEMS_TO_PLAYLIST_URI = "/v1/playlists/{playlistId}/items"
+    const val SEARCH_FOR_ITEMS_URI = "/v1/search"
+    object SearchForItemsParams{
+      const val Q = "q"
+      const val TYPE = "type"
+      const val LIMIT = "limit"
+    }
   }
 
   override fun createPlaylist(createPlaylistRequest: CreatePlaylistRequest): CreatePlaylistResponse {
@@ -26,6 +32,21 @@ class RestClientSpotifyClient(private val restClient: RestClient) : SpotifyClien
       .body(addItemsToPlaylistRequest)
       .retrieve()
       .body<AddItemsToPlaylistResponse>()
+      ?: throw SpotifyException("Somehow the body was null")
+  }
+
+  override fun searchForItems(searchRequest: SearchForItemsRequest): SearchForItemsResponse {
+    return restClient.get().uri { uriBuilder ->
+      uriBuilder.path(SEARCH_FOR_ITEMS_URI)
+        .queryParam(SearchForItemsParams.Q, searchRequest.q)
+        .queryParam(SearchForItemsParams.TYPE, searchRequest.type.value)
+      if (searchRequest.limit != null) {
+        uriBuilder.queryParam(SearchForItemsParams.LIMIT, searchRequest.limit)
+      }
+      uriBuilder.build()
+    }
+      .retrieve()
+      .body<SearchForItemsResponse>()
       ?: throw SpotifyException("Somehow the body was null")
   }
 }
