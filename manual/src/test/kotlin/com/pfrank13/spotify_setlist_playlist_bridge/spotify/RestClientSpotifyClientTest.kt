@@ -4,11 +4,8 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
-import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.mockito.Mockito
@@ -19,6 +16,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2AccessToken
+import java.net.URI
 
 class RestClientSpotifyClientTest {
   companion object {
@@ -87,5 +85,34 @@ class RestClientSpotifyClientTest {
 
     //THEN
     Assertions.assertThat(createdPlaylist).usingRecursiveComparison().isEqualTo(expectedPlaylistResponse)
+  }
+
+  @Test
+  fun addItemsToPlaylist() {
+    //GIVEN
+    val playlistId = "myPlaylistId"
+    val expectedItemUri = "http://spotify.com/someId"
+    val expectedSnapshotId = "mySnapshotId"
+    val addItemsToPlaylistRequest = AddItemsToPlaylistRequest(listOf(URI(expectedItemUri)))
+
+    wireMock.stubFor(
+      WireMock.post(urlEqualTo("/v1/playlists/$playlistId/items"))
+        .withHeader(HttpHeaders.AUTHORIZATION, WireMock.equalTo("Bearer $bearerToken"))
+        .withRequestBody(
+          matchingJsonPath("$.uris[0]")
+        )
+        .willReturn(
+          WireMock.okJson(
+            Companion::class.java.getResourceAsStream("/addItemsToPlaylistResponse.json")!!.readAllBytes()
+              .toString(Charsets.UTF_8)
+          )
+        )
+    )
+
+    //WHEN
+    val mutatedSnapshotId = restClientSpotifyClient.addItemsToPlaylist(playlistId, addItemsToPlaylistRequest)
+
+    //THEN
+    Assertions.assertThat(mutatedSnapshotId.snapshotId).isEqualTo(expectedSnapshotId)
   }
 }
