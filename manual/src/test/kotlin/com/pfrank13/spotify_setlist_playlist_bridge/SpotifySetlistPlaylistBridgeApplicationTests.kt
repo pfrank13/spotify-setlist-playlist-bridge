@@ -6,9 +6,13 @@ import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.microsoft.playwright.Browser
+import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.springframework.boot.test.context.SpringBootTest
@@ -36,6 +40,13 @@ class SpotifySetlistPlaylistBridgeApplicationTests {
 		}
 
 		@JvmStatic
+		@AfterAll
+		fun tearDownClass() {
+			browser.close()
+			playwright.close()
+		}
+
+		@JvmStatic
 		@DynamicPropertySource
 		fun dynamicProperties(registry: DynamicPropertyRegistry) {
 			registry.add("spring.security.oauth2.client.provider.spotify.authorization-uri") {
@@ -46,6 +57,17 @@ class SpotifySetlistPlaylistBridgeApplicationTests {
 
 	@LocalServerPort
 	private var port: Int = 0
+	private lateinit var page: Page
+
+	@BeforeEach
+	fun setUp() {
+		page = browser.newPage()
+	}
+
+	@AfterEach
+	fun tearDown() {
+		page.close()
+	}
 
 	@Test
 	fun contextLoads() {
@@ -55,7 +77,6 @@ class SpotifySetlistPlaylistBridgeApplicationTests {
 	fun oauthIngressVerification() {
 		//GIVEN
 		wireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/authorize")).willReturn(aResponse().withStatus(200)))
-		val page = browser.newPage()
 
 		//WHEN
 		page.navigate("http://localhost:$port/oauth2/authorization/spotify")

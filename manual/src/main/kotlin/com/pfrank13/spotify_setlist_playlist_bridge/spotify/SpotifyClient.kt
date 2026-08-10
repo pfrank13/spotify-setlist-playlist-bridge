@@ -1,6 +1,7 @@
 package com.pfrank13.spotify_setlist_playlist_bridge.spotify
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.net.URI
 
 data class CreatePlaylistRequest(
   val name: String,
@@ -19,6 +20,16 @@ data class CreatePlaylistResponse(
   val description: String?,
 )
 
+data class AddItemsToPlaylistRequest(
+  val uris: List<URI>,
+  val position: Int? = null,
+)
+
+data class AddItemsToPlaylistResponse(
+  @JsonProperty("snapshot_id")
+  val snapshotId: String,
+)
+
 class SpotifyException : RuntimeException {
   constructor() : super()
   constructor(message: String?) : super(message)
@@ -34,4 +45,5 @@ class SpotifyException : RuntimeException {
 
 interface SpotifyClient {
   fun createPlaylist(createPlaylistRequest: CreatePlaylistRequest): CreatePlaylistResponse
+  fun addItemsToPlaylist(playlistId: String, addItemsToPlaylistRequest: AddItemsToPlaylistRequest): AddItemsToPlaylistResponse
 }
