@@ -27,7 +27,7 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 	testImplementation("org.assertj:assertj-core:3.27.7")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
 	testImplementation("com.microsoft.playwright:playwright:1.52.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
