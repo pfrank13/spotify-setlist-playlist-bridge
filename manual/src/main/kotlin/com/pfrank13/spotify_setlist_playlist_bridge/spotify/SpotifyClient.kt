@@ -46,10 +46,17 @@ data class SearchForItemsRequest(
   val limit: Int? = null,
 )
 
+data class ArtistItem(
+  val id: String,
+  val name: String,
+  val uri: URI
+)
+
 data class TrackItem(
   val id: String,
   val name: String,
   val uri: URI,
+  val artists: List<ArtistItem>,
 )
 
 data class Tracks(
